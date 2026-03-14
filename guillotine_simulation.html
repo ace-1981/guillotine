@@ -466,26 +466,55 @@
   .instructions strong { color: #bdc3c7; }
 
   /* ===== SAFETY PRESENTATION STYLES ===== */
+  @keyframes safetyPulse {
+    0%, 100% { box-shadow: 0 0 8px rgba(231,76,60,0.3), inset 0 0 8px rgba(231,76,60,0.1); }
+    50% { box-shadow: 0 0 22px rgba(231,76,60,0.7), inset 0 0 12px rgba(231,76,60,0.2); }
+  }
+  @keyframes warningStripe {
+    0% { background-position: 0 0; }
+    100% { background-position: 40px 0; }
+  }
   .safety-btn {
     display: block;
     width: 100%;
-    padding: 12px 15px;
-    margin-top: 12px;
-    border: 2px solid #c0392b;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #922, #c0392b);
+    padding: 18px 15px 16px;
+    margin-top: 16px;
+    border: 3px solid #e74c3c;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #a01020, #c0392b, #e74c3c);
     color: #fff;
-    font-size: 14px;
-    font-weight: 700;
+    font-size: 18px;
+    font-weight: 800;
     cursor: pointer;
     text-align: center;
-    transition: all 0.2s ease;
-    letter-spacing: 0.5px;
+    transition: all 0.25s ease;
+    letter-spacing: 1px;
+    animation: safetyPulse 2.5s ease-in-out infinite;
+    position: relative;
+    overflow: hidden;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  }
+  .safety-btn::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 5px;
+    background: repeating-linear-gradient(90deg, #f1c40f 0, #f1c40f 10px, #333 10px, #333 20px);
+    animation: warningStripe 1s linear infinite;
+  }
+  .safety-btn::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 5px;
+    background: repeating-linear-gradient(90deg, #333 0, #333 10px, #f1c40f 10px, #f1c40f 20px);
+    animation: warningStripe 1s linear infinite reverse;
   }
   .safety-btn:hover {
-    background: linear-gradient(135deg, #c0392b, #e74c3c);
-    transform: scale(1.02);
-    box-shadow: 0 0 20px rgba(231,76,60,0.4);
+    background: linear-gradient(135deg, #c0392b, #e74c3c, #ff6b6b);
+    transform: scale(1.05);
+    box-shadow: 0 0 35px rgba(231,76,60,0.6), 0 4px 15px rgba(0,0,0,0.3);
+    border-color: #f1c40f;
   }
   .safety-overlay {
     position: fixed;
@@ -676,7 +705,17 @@
     <div class="panel-header">Interactive Controls</div>
     <div class="panel-body">
 
-      <!-- Cylinder -->
+<!-- Safety Guard -->
+    <div class="control-group">
+      <div class="control-group-title">Safety Guard / מגן בטיחות</div>
+      <button class="btn" id="btnDoor" onclick="SIM.toggleDoor()" style="border-color:#c0392b;">
+        <span class="btn-indicator"></span>
+        <span class="btn-text">מגן בטיחות: פתוח</span>
+      </button>
+      <div style="text-align:center; font-size:10px; color:#e74c3c; margin-top:2px;">⚠ יש לסגור את המגן לפני הפעלה</div>
+    </div>
+
+    <!-- Cylinder -->
       <div class="control-group">
         <div class="control-group-title">Paper Cylinder / Roller</div>
         <button class="btn" id="btnCylinder" onclick="SIM.toggleCylinder()">
@@ -703,17 +742,19 @@
 
       <!-- Safety Presentation -->
       <button class="safety-btn" onclick="SAFETY.open()">
-        &#9888; מצגת בטיחות - תקלות מסוכנות
+        &#9888;&#65039; מצגת בטיחות<br>
+        <span style="font-size:13px; font-weight:600; opacity:0.9;">לחץ לצפייה בתרחישי סכנה ואמצעי מניעה</span>
       </button>
 
       <!-- Instructions -->
       <div class="instructions" style="direction:rtl; text-align:right;">
         <strong>הוראות הפעלה:</strong><br>
-        1. לחץ על כפתור הגליל להכנסתו למצב CLOSED<br>
-        2. לחץ והחזק את שני הכפתורים PB1+PB2 בו זמנית<br>
-        3. צפה במחזור החיתוך מתבצע<br>
+        1. סגור את מגן הבטיחות (Safety Guard)<br>
+        2. לחץ על כפתור הגליל להכנסתו למצב CLOSED<br>
+        3. לחץ והחזק את שני הכפתורים PB1+PB2 בו זמנית<br>
+        4. צפה במחזור החיתוך מתבצע<br>
         <br>
-        <strong>שים לב:</strong> שחרור כל קלט בטיחות במהלך המחזור יעצור מיידית את המערכת.
+        <strong>שים לב:</strong> פתיחת המגן או שחרור כפתור במהלך המחזור יעצור מיידית את המערכת.
       </div>
 
       <!-- Event Log -->
@@ -816,9 +857,15 @@
           </g>
 
           <!-- Transparent safety guard (polycarbonate) -->
-          <rect x="175" y="80" width="210" height="185" rx="3" fill="rgba(100,180,255,0.06)" stroke="rgba(150,200,255,0.25)" stroke-width="1.5" stroke-dasharray="none"/>
-          <line x1="175" y1="80" x2="175" y2="265" stroke="rgba(200,230,255,0.15)" stroke-width="1"/>
-          <text x="280" y="95" text-anchor="middle" font-size="7" fill="rgba(150,200,255,0.3)">SAFETY GUARD</text>
+          <g id="safetyGuardGroup">
+            <rect x="175" y="80" width="210" height="185" rx="3" id="guardPanel"
+                  fill="rgba(100,180,255,0.06)" stroke="rgba(150,200,255,0.25)" stroke-width="1.5"/>
+            <line x1="175" y1="80" x2="175" y2="265" stroke="rgba(200,230,255,0.15)" stroke-width="1" id="guardEdge"/>
+            <text x="280" y="95" text-anchor="middle" font-size="7" id="guardLabel" fill="rgba(150,200,255,0.3)">SAFETY GUARD</text>
+            <!-- Guard status indicator -->
+            <circle cx="190" cy="90" r="4" id="guardLed" fill="#e74c3c"/>
+            <text x="200" y="93" font-size="6" fill="#e74c3c" id="guardStatusText">OPEN</text>
+          </g>
 
           <!-- Table / cutting surface -->
           <rect x="175" y="268" width="210" height="10" rx="2" class="machine-table"/>
@@ -1149,6 +1196,11 @@
 
       <div class="control-group">
         <div class="control-group-title">Safety Inputs</div>
+        <div class="status-item off" id="stDoor">
+          <div class="status-led"></div>
+          <div class="status-label">Safety Guard / מגן</div>
+          <div class="status-value">OPEN</div>
+        </div>
         <div class="status-item off" id="stSensor">
           <div class="status-led"></div>
           <div class="status-label">Inductive Sensor</div>
@@ -1247,7 +1299,7 @@ const SIM = (() => {
   // ===== STATE =====
   const state = {
     // Inputs
-    doorClosed: true,
+    doorClosed: false,
     cylinderClosed: false,
     pb1Pressed: false,
     pb2Pressed: false,
@@ -1297,6 +1349,16 @@ const SIM = (() => {
   }
 
   // ===== INPUT HANDLERS =====
+  function toggleDoor() {
+    if (state.cycleActive) {
+      log('Cannot open guard during active cycle!', 'off');
+      return;
+    }
+    state.doorClosed = !state.doorClosed;
+    log(`Safety Guard ${state.doorClosed ? 'CLOSED ✓' : 'OPENED ✗'}`, state.doorClosed ? 'on' : 'off');
+    updateUI();
+  }
+
   function toggleCylinder() {
     state.cylinderClosed = !state.cylinderClosed;
     log(`Cylinder ${state.cylinderClosed ? 'CLOSED' : 'OPENED'}`, state.cylinderClosed ? 'on' : 'off');
@@ -1345,10 +1407,10 @@ const SIM = (() => {
 
     // --- Sensor logic ---
     // Inductive sensor detects cylinder in closed position
-    state.sensorActive = state.cylinderClosed;
+    state.sensorActive = state.cylinderClosed && state.doorClosed;
 
     // --- R1 logic ---
-    // R1 energized when sensor outputs 24V
+    // R1 energized when sensor outputs 24V (only if guard closed)
     state.r1Energized = state.sensorActive;
 
     // --- Two-hand control validation ---
@@ -1356,7 +1418,8 @@ const SIM = (() => {
     state.twoHandValid = state.pb1Pressed && state.pb2Pressed;
 
     // --- Cycle start conditions ---
-    const allConditionsMet = state.sensorActive &&
+    const allConditionsMet = state.doorClosed &&
+                             state.sensorActive &&
                              state.r1Energized &&
                              state.twoHandValid;
 
@@ -1385,6 +1448,18 @@ const SIM = (() => {
     }
 
     if (state.cyclePhase === 'cutting' || state.cyclePhase === 'returning') {
+      // Safety interlock: if guard opened during cycle - immediate stop
+      if (!state.doorClosed) {
+        if (state.sv1Energized) {
+          state.sv1Energized = false;
+          log('!!! GUARD OPENED - EMERGENCY STOP !!!', 'off');
+          log('Spring-loaded coil returning knife UP', 'warn');
+        }
+        state.knifeDirection = 'up';
+        state.knifeMoving = true;
+        state.cyclePhase = 'returning';
+      }
+
       // Safety interlock: if sensor lost (cylinder not in place), SV1 de-energizes
       // Spring-loaded coil returns knife UP automatically
       if (!state.r1Energized) {
@@ -1495,14 +1570,18 @@ const SIM = (() => {
   // ===== UI UPDATE =====
   function updateUI() {
     // --- Control buttons ---
+    // --- Door/Guard button ---
+    const btnDoor = document.getElementById('btnDoor');
+    btnDoor.classList.toggle('active', state.doorClosed);
+    btnDoor.style.borderColor = state.doorClosed ? '#2ecc71' : '#c0392b';
+    btnDoor.querySelector('.btn-text').textContent = state.doorClosed ? 'מגן בטיחות: סגור ✓' : 'מגן בטיחות: פתוח ✗';
+
     const btnCyl = document.getElementById('btnCylinder');
     btnCyl.classList.toggle('active', state.cylinderClosed);
     btnCyl.querySelector('.btn-text').textContent = `Cylinder: ${state.cylinderClosed ? 'CLOSED' : 'OPEN'}`;
 
-    document.getElementById('btnPB1').classList.toggle('active', state.pb1Pressed);
-    document.getElementById('btnPB2').classList.toggle('active', state.pb2Pressed);
-
     // --- Status indicators ---
+    setStatus('stDoor', state.doorClosed, state.doorClosed ? 'CLOSED ✓' : 'OPEN ✗');
     setStatus('stSensor', state.sensorActive, state.sensorActive ? 'ACTIVE' : 'OFF');
     setStatus('stR1', state.r1Energized, state.r1Energized ? 'ON' : 'OFF');
     setStatus('stPB1', state.pb1Pressed, state.pb1Pressed ? 'PRESSED' : 'OFF');
@@ -1549,6 +1628,35 @@ const SIM = (() => {
       cylBody.setAttribute('class', 'cylinder-body cylinder-closed');
     } else {
       cylBody.setAttribute('class', 'cylinder-body cylinder-open');
+    }
+
+    // Safety Guard
+    const guardPanel = document.getElementById('guardPanel');
+    const guardLed = document.getElementById('guardLed');
+    const guardStatusText = document.getElementById('guardStatusText');
+    const guardLabel = document.getElementById('guardLabel');
+    if (state.doorClosed) {
+      guardPanel.setAttribute('fill', 'rgba(100,180,255,0.12)');
+      guardPanel.setAttribute('stroke', 'rgba(46,204,113,0.4)');
+      guardPanel.setAttribute('stroke-width', '2');
+      guardLed.setAttribute('fill', '#2ecc71');
+      guardStatusText.textContent = 'CLOSED';
+      guardStatusText.setAttribute('fill', '#2ecc71');
+      guardLabel.setAttribute('fill', 'rgba(46,204,113,0.4)');
+      guardLabel.textContent = 'SAFETY GUARD - CLOSED';
+    } else {
+      guardPanel.setAttribute('fill', 'rgba(255,100,100,0.04)');
+      guardPanel.setAttribute('stroke', 'rgba(231,76,60,0.3)');
+      guardPanel.setAttribute('stroke-width', '2');
+      guardPanel.setAttribute('stroke-dasharray', '8 4');
+      guardLed.setAttribute('fill', '#e74c3c');
+      guardStatusText.textContent = 'OPEN';
+      guardStatusText.setAttribute('fill', '#e74c3c');
+      guardLabel.setAttribute('fill', 'rgba(231,76,60,0.4)');
+      guardLabel.textContent = 'SAFETY GUARD - OPEN ⚠';
+    }
+    if (state.doorClosed) {
+      guardPanel.removeAttribute('stroke-dasharray');
     }
 
     // Sensor
@@ -1791,7 +1899,7 @@ const SIM = (() => {
 
   // ===== RESET =====
   function reset() {
-    state.doorClosed = true;
+    state.doorClosed = false;
     state.cylinderClosed = false;
     state.pb1Pressed = false;
     state.pb2Pressed = false;
@@ -1839,6 +1947,9 @@ const SIM = (() => {
       if (timeDiff <= SIMULTANEOUS_WINDOW) {
         e.preventDefault();
         ctrlAltHeld = true;
+        if (!state.doorClosed) {
+          toggleDoor();
+        }
         if (!state.cylinderClosed) {
           toggleCylinder();
         }
@@ -1859,6 +1970,7 @@ const SIM = (() => {
 
   // ===== PUBLIC API =====
   return {
+    toggleDoor,
     toggleCylinder,
     pressPB,
     releasePB,
