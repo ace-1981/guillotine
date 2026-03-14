@@ -689,24 +689,7 @@
       <!-- Pushbuttons -->
       <div class="control-group">
         <div class="control-group-title">Two-Hand Pushbutton Station</div>
-        <div class="pushbutton-station">
-          <button class="btn pushbutton" id="btnPB1"
-            onmousedown="SIM.pressPB(1)" onmouseup="SIM.releasePB(1)"
-            onmouseleave="SIM.releasePB(1)"
-            ontouchstart="SIM.pressPB(1)" ontouchend="SIM.releasePB(1)">
-            PB1
-          </button>
-          <button class="btn pushbutton" id="btnPB2"
-            onmousedown="SIM.pressPB(2)" onmouseup="SIM.releasePB(2)"
-            onmouseleave="SIM.releasePB(2)"
-            ontouchstart="SIM.pressPB(2)" ontouchend="SIM.releasePB(2)">
-            PB2
-          </button>
-        </div>
-        <div style="text-align: center; font-size: 10px; color: #7f8c8d; margin-top: -5px;">
-          לחץ והחזק את שני הכפתורים בו זמנית
-        </div>
-        <button class="btn" id="btnBothPB" style="margin-top:10px; text-align:center; background:#5b2080; border-color:#7b30a0; color:#fff; font-weight:700;"
+        <button class="btn" id="btnBothPB" style="text-align:center; background:#5b2080; border-color:#7b30a0; color:#fff; font-weight:700;"
           onmousedown="SIM.pressBoth()" onmouseup="SIM.releaseBoth()"
           onmouseleave="SIM.releaseBoth()"
           ontouchstart="SIM.pressBoth()" ontouchend="SIM.releaseBoth()">
@@ -846,6 +829,28 @@
           <rect x="380" y="302" width="55" height="10" rx="2" fill="#4a4c50" stroke="#5a5c60" stroke-width="1"/>
           <!-- Floor line -->
           <line x1="100" y1="312" x2="530" y2="312" stroke="#3a3f4a" stroke-width="1" opacity="0.5"/>
+
+          <!-- ===== PB1 & PB2 PUSHBUTTONS (left side of machine) ===== -->
+          <g id="svgPB1" transform="translate(75, 180)" style="cursor:pointer;"
+             onmousedown="SIM.pressPB(1)" onmouseup="SIM.releasePB(1)" onmouseleave="SIM.releasePB(1)"
+             ontouchstart="SIM.pressPB(1)" ontouchend="SIM.releasePB(1)">
+            <rect x="-18" y="-12" width="36" height="36" rx="6" fill="#2a2d35" stroke="#4a4d55" stroke-width="1.5"/>
+            <circle cx="0" cy="6" r="12" fill="#2d8a4e" stroke="#1a6a38" stroke-width="2" id="svgPB1face"/>
+            <circle cx="0" cy="6" r="8" fill="#3aa060" id="svgPB1inner"/>
+            <ellipse cx="-2" cy="2" rx="4" ry="3" fill="rgba(255,255,255,0.15)"/>
+            <text x="0" y="32" text-anchor="middle" font-size="8" fill="#8a8d95" font-weight="700">PB1</text>
+            <text x="0" y="42" text-anchor="middle" font-size="6" fill="#9b59b6">לחץ + החזק</text>
+          </g>
+          <g id="svgPB2" transform="translate(75, 250)" style="cursor:pointer;"
+             onmousedown="SIM.pressPB(2)" onmouseup="SIM.releasePB(2)" onmouseleave="SIM.releasePB(2)"
+             ontouchstart="SIM.pressPB(2)" ontouchend="SIM.releasePB(2)">
+            <rect x="-18" y="-12" width="36" height="36" rx="6" fill="#2a2d35" stroke="#4a4d55" stroke-width="1.5"/>
+            <circle cx="0" cy="6" r="12" fill="#2d8a4e" stroke="#1a6a38" stroke-width="2" id="svgPB2face"/>
+            <circle cx="0" cy="6" r="8" fill="#3aa060" id="svgPB2inner"/>
+            <ellipse cx="-2" cy="2" rx="4" ry="3" fill="rgba(255,255,255,0.15)"/>
+            <text x="0" y="32" text-anchor="middle" font-size="8" fill="#8a8d95" font-weight="700">PB2</text>
+            <text x="0" y="42" text-anchor="middle" font-size="6" fill="#9b59b6">לחץ + החזק</text>
+          </g>
 
           <!-- ===== KNIFE (YELLOW) ===== -->
           <g id="knifeGroup" transform="translate(0, 0)">
@@ -1667,6 +1672,20 @@ const SIM = (() => {
     ['wireSensorR1a', 'wireSensorR1b', 'wireSensorR1c'].forEach(id => {
       document.getElementById(id).setAttribute('class', wireActive ? 'wire active' : 'wire');
     });
+
+    // SVG PB buttons visual feedback
+    const pb1face = document.getElementById('svgPB1face');
+    const pb1inner = document.getElementById('svgPB1inner');
+    const pb2face = document.getElementById('svgPB2face');
+    const pb2inner = document.getElementById('svgPB2inner');
+    if (pb1face) {
+      pb1face.setAttribute('fill', state.pb1Pressed ? '#1a6a38' : '#2d8a4e');
+      pb1inner.setAttribute('fill', state.pb1Pressed ? '#2ecc71' : '#3aa060');
+    }
+    if (pb2face) {
+      pb2face.setAttribute('fill', state.pb2Pressed ? '#1a6a38' : '#2d8a4e');
+      pb2inner.setAttribute('fill', state.pb2Pressed ? '#2ecc71' : '#3aa060');
+    }
 
     // 24V supply indicator
     const supply = document.getElementById('supply24v');
