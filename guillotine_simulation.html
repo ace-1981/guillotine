@@ -1,0 +1,2216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Paper Guillotine - Electrical Control Simulation</title>
+<style>
+  /* ===== RESET & BASE ===== */
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #1a1d23;
+    color: #e0e0e0;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ===== HEADER ===== */
+  .header {
+    background: linear-gradient(135deg, #2c3e50, #34495e);
+    padding: 12px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 3px solid #f39c12;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.5);
+  }
+  .header h1 {
+    font-size: 22px;
+    font-weight: 600;
+    color: #ecf0f1;
+    letter-spacing: 1px;
+  }
+  .header .subtitle {
+    font-size: 12px;
+    color: #95a5a6;
+  }
+  .version-tag {
+    background: #2980b9;
+    color: white;
+    padding: 3px 10px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* ===== MAIN LAYOUT ===== */
+  .main-container {
+    display: grid;
+    grid-template-columns: 320px 1fr 300px;
+    gap: 15px;
+    padding: 15px;
+    max-width: 1600px;
+    margin: 0 auto;
+    min-height: calc(100vh - 60px);
+  }
+
+  /* ===== PANELS ===== */
+  .panel {
+    background: #22262e;
+    border: 1px solid #3a3f4a;
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .panel-header {
+    background: linear-gradient(135deg, #2c3e50, #3a4a5c);
+    padding: 10px 15px;
+    font-size: 14px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border-bottom: 2px solid #f39c12;
+    color: #ecf0f1;
+  }
+  .panel-body {
+    padding: 15px;
+  }
+
+  /* ===== CONTROL BUTTONS ===== */
+  .control-group {
+    margin-bottom: 18px;
+  }
+  .control-group-title {
+    font-size: 11px;
+    text-transform: uppercase;
+    color: #7f8c8d;
+    letter-spacing: 1px;
+    margin-bottom: 8px;
+    border-bottom: 1px solid #3a3f4a;
+    padding-bottom: 4px;
+  }
+  .btn {
+    display: block;
+    width: 100%;
+    padding: 10px 15px;
+    margin-bottom: 6px;
+    border: 2px solid #3a3f4a;
+    border-radius: 6px;
+    background: #2c3038;
+    color: #bdc3c7;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+  .btn:hover {
+    border-color: #5a6a7a;
+    background: #343a44;
+  }
+  .btn:active {
+    transform: scale(0.98);
+  }
+  .btn .btn-indicator {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    margin-right: 10px;
+    background: #555;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.4);
+    transition: all 0.2s;
+    vertical-align: middle;
+  }
+  .btn.active .btn-indicator {
+    background: #2ecc71;
+    box-shadow: 0 0 8px rgba(46, 204, 113, 0.6), inset 0 1px 2px rgba(255,255,255,0.3);
+  }
+  .btn.active {
+    border-color: #2ecc71;
+    background: #1e3a2a;
+  }
+  .btn.pushbutton {
+    text-align: center;
+    background: #8B0000;
+    border-color: #a00;
+    color: #fff;
+    border-radius: 50%;
+    width: 80px;
+    height: 80px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    margin: 0 10px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.4), inset 0 2px 4px rgba(255,255,255,0.1);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+  .btn.pushbutton:active, .btn.pushbutton.active {
+    background: #cc0000;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.4), inset 0 2px 6px rgba(0,0,0,0.3);
+    transform: scale(0.95);
+    border-color: #ff4444;
+  }
+  .pushbutton-station {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    padding: 15px 0;
+  }
+
+  .btn-reset {
+    background: linear-gradient(135deg, #e74c3c, #c0392b);
+    border-color: #e74c3c;
+    color: #fff;
+    text-align: center;
+    margin-top: 15px;
+    font-size: 14px;
+  }
+  .btn-reset:hover {
+    background: linear-gradient(135deg, #ff5544, #e74c3c);
+    border-color: #ff5544;
+  }
+
+  /* ===== MACHINE VISUALIZATION ===== */
+  .machine-area {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+  }
+
+  /* Machine visual */
+  .machine-visual {
+    flex: 1;
+    min-height: 420px;
+    position: relative;
+  }
+  .machine-svg-container {
+    width: 100%;
+    height: 100%;
+    min-height: 420px;
+  }
+
+  /* Ladder diagram */
+  .ladder-diagram {
+    min-height: 260px;
+  }
+
+  /* ===== STATUS INDICATORS ===== */
+  .status-item {
+    display: flex;
+    align-items: center;
+    padding: 8px 10px;
+    margin-bottom: 4px;
+    background: #282c34;
+    border-radius: 5px;
+    border-left: 3px solid #555;
+    transition: all 0.2s;
+  }
+  .status-item.on {
+    border-left-color: #2ecc71;
+    background: #1e3a2a;
+  }
+  .status-item.off {
+    border-left-color: #e74c3c;
+  }
+  .status-led {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    margin-right: 10px;
+    background: #444;
+    box-shadow: inset 0 1px 3px rgba(0,0,0,0.5);
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .status-item.on .status-led {
+    background: #2ecc71;
+    box-shadow: 0 0 10px rgba(46, 204, 113, 0.6);
+  }
+  .status-item.off .status-led {
+    background: #e74c3c;
+    box-shadow: 0 0 6px rgba(231, 76, 60, 0.3);
+  }
+  .status-label {
+    font-size: 12px;
+    font-weight: 500;
+    flex: 1;
+  }
+  .status-value {
+    font-size: 11px;
+    font-weight: 700;
+    text-transform: uppercase;
+    min-width: 40px;
+    text-align: right;
+  }
+  .status-item.on .status-value { color: #2ecc71; }
+  .status-item.off .status-value { color: #e74c3c; }
+
+  /* Timer display */
+  .timer-display {
+    background: #111;
+    border: 2px solid #3a3f4a;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    margin-top: 10px;
+  }
+  .timer-display .timer-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: #7f8c8d;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+  }
+  .timer-display .timer-value {
+    font-size: 36px;
+    font-weight: 700;
+    font-family: 'Courier New', monospace;
+    color: #555;
+    transition: color 0.3s;
+  }
+  .timer-display.active .timer-value {
+    color: #f39c12;
+    text-shadow: 0 0 15px rgba(243, 156, 18, 0.5);
+  }
+  .timer-bar {
+    height: 6px;
+    background: #333;
+    border-radius: 3px;
+    margin-top: 8px;
+    overflow: hidden;
+  }
+  .timer-bar-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #f39c12, #e67e22);
+    border-radius: 3px;
+    transition: width 0.1s linear;
+  }
+
+  /* Knife position indicator */
+  .knife-position {
+    background: #111;
+    border: 2px solid #3a3f4a;
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+    margin-top: 10px;
+  }
+  .knife-position .kp-label {
+    font-size: 10px;
+    text-transform: uppercase;
+    color: #7f8c8d;
+    letter-spacing: 1px;
+    margin-bottom: 5px;
+  }
+  .knife-track {
+    height: 100px;
+    width: 30px;
+    background: #282c34;
+    border: 1px solid #3a3f4a;
+    border-radius: 4px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+  }
+  .knife-track-marker {
+    position: absolute;
+    width: 100%;
+    height: 6px;
+    background: #e74c3c;
+    border-radius: 2px;
+    top: 0;
+    transition: top 0.3s;
+    box-shadow: 0 0 8px rgba(231, 76, 60, 0.5);
+  }
+  .knife-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 4px;
+    font-size: 9px;
+    color: #7f8c8d;
+    width: 60px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ===== SVG STYLES ===== */
+  .machine-frame { fill: #3a3f4a; stroke: #555; stroke-width: 2; }
+  .machine-table { fill: #5a5a5a; stroke: #777; stroke-width: 1; }
+  .paper-stack { fill: #f5f0e0; stroke: #d4cfc0; stroke-width: 1; }
+  .knife-blade { fill: #e8c820; stroke: #b89c10; stroke-width: 1.5; }
+  .knife-blade.active { fill: #f0d830; }
+  .knife-edge { stroke: #e74c3c; stroke-width: 2; }
+
+  .door-closed { fill: #4a6a4a; stroke: #5a8a5a; stroke-width: 2; }
+  .door-open { fill: #6a4a4a; stroke: #8a5a5a; stroke-width: 2; }
+  .door-glass { fill: rgba(100, 180, 255, 0.15); stroke: rgba(100, 180, 255, 0.3); }
+  .door-glass-open { fill: rgba(255, 100, 100, 0.1); stroke: rgba(255, 100, 100, 0.2); }
+
+  .cylinder-body { fill: #e8e2d4; stroke: #ccc6b6; stroke-width: 1.5; }
+  .cylinder-closed { fill: #e8e2d4; stroke: #2ecc71; stroke-width: 2; }
+  .cylinder-open { fill: #e8e2d4; stroke: #ccc6b6; }
+
+  .sensor-body { fill: #335; stroke: #557; stroke-width: 1; }
+  .sensor-active { fill: #2277cc; stroke: #44aaff; box-shadow: 0 0 10px blue; }
+  .sensor-glow { fill: none; stroke: #44aaff; stroke-width: 1; opacity: 0; }
+  .sensor-glow.active { opacity: 1; }
+
+  .pump-body { fill: #4a4a5a; stroke: #6a6a7a; stroke-width: 1.5; }
+  .pump-running { fill: #4a5a4a; stroke: #5a8a5a; }
+  .pump-fan { fill: #888; stroke: #aaa; stroke-width: 1; transform-origin: center; }
+
+  .sv-body { fill: #4a4a55; stroke: #6a6a77; stroke-width: 1.5; }
+  .sv-active { fill: #4a5a4a; stroke: #5a8a5a; }
+
+  .wire { stroke: #555; stroke-width: 2; fill: none; }
+  .wire.active { stroke: #2ecc71; stroke-width: 2.5; filter: drop-shadow(0 0 3px rgba(46,204,113,0.5)); }
+  .wire-24v { stroke: #c0392b; }
+  .wire-24v.active { stroke: #e74c3c; filter: drop-shadow(0 0 4px rgba(231,76,60,0.5)); }
+
+  .component-label {
+    fill: #95a5a6;
+    font-size: 10px;
+    font-family: 'Segoe UI', sans-serif;
+    font-weight: 600;
+  }
+  .component-label-big {
+    fill: #bdc3c7;
+    font-size: 12px;
+    font-family: 'Segoe UI', sans-serif;
+    font-weight: 700;
+  }
+
+  /* Hydraulic lines */
+  .hydraulic-line { stroke: #1a5276; stroke-width: 3; fill: none; stroke-dasharray: 8 4; }
+  .hydraulic-line.active { stroke: #2980b9; stroke-dasharray: none; }
+
+  /* Flow animation */
+  @keyframes flowDash {
+    to { stroke-dashoffset: -24; }
+  }
+  .hydraulic-line.flowing {
+    stroke: #3498db;
+    stroke-dasharray: 8 4;
+    animation: flowDash 0.6s linear infinite;
+  }
+
+  /* Pump rotation */
+  @keyframes pumpSpin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
+  }
+
+  /* Ladder diagram wire highlighting */
+  .ladder-wire { stroke: #555; stroke-width: 2; fill: none; transition: stroke 0.35s ease, stroke-width 0.35s ease; }
+  .ladder-wire.active { stroke: #2ecc71; stroke-width: 2.5; filter: drop-shadow(0 0 3px rgba(46,204,113,0.4)); }
+  .ladder-contact { fill: none; stroke: #888; stroke-width: 2; transition: stroke 0.35s ease, stroke-width 0.35s ease; }
+  .ladder-contact.closed { stroke: #2ecc71; stroke-width: 2.5; }
+  .ladder-coil { fill: none; stroke: #888; stroke-width: 2; transition: stroke 0.35s ease, stroke-width 0.35s ease, fill 0.35s ease; }
+  .ladder-coil.energized { stroke: #f39c12; stroke-width: 2.5; fill: rgba(243,156,18,0.08); filter: drop-shadow(0 0 4px rgba(243,156,18,0.5)); }
+
+  /* Ladder diagram smooth transitions for inline-styled elements */
+  #ladderSVG line, #ladderSVG rect, #ladderSVG circle {
+    transition: stroke 0.35s ease, stroke-width 0.35s ease, fill 0.35s ease, filter 0.35s ease;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 1200px) {
+    .main-container {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  /* Log area */
+  .event-log {
+    max-height: 120px;
+    overflow-y: auto;
+    font-size: 11px;
+    font-family: 'Courier New', monospace;
+    background: #111;
+    border: 1px solid #333;
+    border-radius: 4px;
+    padding: 8px;
+    margin-top: 10px;
+  }
+  .event-log div {
+    padding: 2px 0;
+    border-bottom: 1px solid #222;
+    color: #7f8c8d;
+  }
+  .event-log div .log-time {
+    color: #555;
+    margin-right: 8px;
+  }
+  .event-log div.log-on { color: #2ecc71; }
+  .event-log div.log-off { color: #e74c3c; }
+  .event-log div.log-warn { color: #f39c12; }
+
+  /* Instructions area */
+  .instructions {
+    font-size: 11px;
+    color: #7f8c8d;
+    line-height: 1.6;
+    padding: 10px;
+    background: #1a1d22;
+    border-radius: 4px;
+    margin-top: 10px;
+  }
+  .instructions strong { color: #bdc3c7; }
+
+  /* ===== SAFETY PRESENTATION STYLES ===== */
+  .safety-btn {
+    display: block;
+    width: 100%;
+    padding: 12px 15px;
+    margin-top: 12px;
+    border: 2px solid #c0392b;
+    border-radius: 8px;
+    background: linear-gradient(135deg, #922, #c0392b);
+    color: #fff;
+    font-size: 14px;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+    letter-spacing: 0.5px;
+  }
+  .safety-btn:hover {
+    background: linear-gradient(135deg, #c0392b, #e74c3c);
+    transform: scale(1.02);
+    box-shadow: 0 0 20px rgba(231,76,60,0.4);
+  }
+  .safety-overlay {
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(0,0,0,0.92);
+    z-index: 10000;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+  }
+  .safety-overlay.visible {
+    display: flex;
+  }
+  .safety-slide {
+    width: 90%;
+    max-width: 900px;
+    background: #1a1d22;
+    border-radius: 16px;
+    border: 2px solid #333;
+    overflow: hidden;
+    box-shadow: 0 20px 60px rgba(0,0,0,0.8);
+  }
+  .safety-slide-header {
+    background: linear-gradient(135deg, #922, #c0392b);
+    padding: 18px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    direction: rtl;
+  }
+  .safety-slide-header h2 {
+    margin: 0;
+    font-size: 20px;
+    color: #fff;
+  }
+  .safety-slide-counter {
+    color: rgba(255,255,255,0.7);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .safety-slide-body {
+    display: flex;
+    direction: rtl;
+    min-height: 380px;
+  }
+  .safety-slide-visual {
+    flex: 1;
+    background: #12151a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    position: relative;
+  }
+  .safety-slide-info {
+    flex: 1;
+    padding: 28px;
+    direction: rtl;
+    text-align: right;
+  }
+  .safety-slide-info h3 {
+    color: #e74c3c;
+    font-size: 18px;
+    margin: 0 0 12px 0;
+  }
+  .safety-slide-info .scenario-desc {
+    color: #bdc3c7;
+    font-size: 14px;
+    line-height: 1.8;
+    margin-bottom: 16px;
+  }
+  .safety-slide-info .danger-level {
+    display: inline-block;
+    padding: 4px 12px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 14px;
+  }
+  .danger-critical { background: #c0392b; color: #fff; }
+  .danger-high { background: #e67e22; color: #fff; }
+  .danger-medium { background: #f1c40f; color: #333; }
+  .safety-slide-info .prevention {
+    background: #1e2a1e;
+    border: 1px solid #2ecc71;
+    border-radius: 8px;
+    padding: 12px;
+    margin-top: 10px;
+  }
+  .safety-slide-info .prevention h4 {
+    color: #2ecc71;
+    font-size: 13px;
+    margin: 0 0 6px 0;
+  }
+  .safety-slide-info .prevention ul {
+    margin: 0; padding: 0 16px 0 0;
+    color: #a0d0a0;
+    font-size: 12px;
+    line-height: 1.8;
+    list-style: none;
+  }
+  .safety-slide-info .prevention ul li::before {
+    content: '\2713 ';
+    color: #2ecc71;
+    font-weight: 700;
+  }
+  .safety-slide-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 24px;
+    border-top: 1px solid #333;
+    background: #15181d;
+  }
+  .safety-nav-btn {
+    padding: 10px 28px;
+    border: 2px solid #555;
+    border-radius: 8px;
+    background: #2c3038;
+    color: #ddd;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .safety-nav-btn:hover {
+    background: #3a3f4a;
+    border-color: #888;
+  }
+  .safety-nav-btn.primary {
+    background: #2980b9;
+    border-color: #3498db;
+    color: #fff;
+  }
+  .safety-nav-btn.primary:hover {
+    background: #3498db;
+  }
+  .safety-close-btn {
+    padding: 10px 28px;
+    border: 2px solid #c0392b;
+    border-radius: 8px;
+    background: #922;
+    color: #fff;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .safety-close-btn:hover { background: #c0392b; }
+  .safety-progress {
+    display: flex;
+    gap: 8px;
+    justify-content: center;
+    padding: 0;
+  }
+  .safety-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #333;
+    transition: background 0.3s;
+  }
+  .safety-dot.active { background: #e74c3c; }
+  .safety-dot.viewed { background: #666; }
+  /* Animations for scenario visuals */
+  @keyframes pulseRed { 0%,100%{opacity:0.3;} 50%{opacity:1;} }
+  @keyframes shakeKnife { 0%,100%{transform:translate(0,0);} 25%{transform:translate(-3px,1px);} 75%{transform:translate(3px,-1px);} }
+  @keyframes leakDrip { 0%{opacity:0;transform:translateY(0);} 50%{opacity:1;} 100%{opacity:0;transform:translateY(30px);} }
+  @keyframes flashWarn { 0%,100%{fill:#f39c12;opacity:1;} 50%{fill:#e74c3c;opacity:0.5;} }
+  @keyframes sparkFlash { 0%{opacity:0;} 10%{opacity:1;} 20%{opacity:0;} 30%{opacity:0.8;} 40%{opacity:0;} 100%{opacity:0;} }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+  <div>
+    <h1>Paper Guillotine - Control System Simulation</h1>
+    <div class="subtitle">Electrical / Pneumatic-Hydraulic Sequence Control</div>
+  </div>
+  <div class="version-tag">v1.7</div>
+</div>
+
+<!-- MAIN LAYOUT -->
+<div class="main-container">
+
+  <!-- LEFT PANEL: CONTROLS -->
+  <div class="panel">
+    <div class="panel-header">Interactive Controls</div>
+    <div class="panel-body">
+
+      <!-- Cylinder -->
+      <div class="control-group">
+        <div class="control-group-title">Paper Cylinder / Roller</div>
+        <button class="btn" id="btnCylinder" onclick="SIM.toggleCylinder()">
+          <span class="btn-indicator"></span>
+          <span class="btn-text">Cylinder: OPEN</span>
+        </button>
+      </div>
+
+      <!-- Pushbuttons -->
+      <div class="control-group">
+        <div class="control-group-title">Two-Hand Pushbutton Station</div>
+        <div class="pushbutton-station">
+          <button class="btn pushbutton" id="btnPB1"
+            onmousedown="SIM.pressPB(1)" onmouseup="SIM.releasePB(1)"
+            onmouseleave="SIM.releasePB(1)"
+            ontouchstart="SIM.pressPB(1)" ontouchend="SIM.releasePB(1)">
+            PB1
+          </button>
+          <button class="btn pushbutton" id="btnPB2"
+            onmousedown="SIM.pressPB(2)" onmouseup="SIM.releasePB(2)"
+            onmouseleave="SIM.releasePB(2)"
+            ontouchstart="SIM.pressPB(2)" ontouchend="SIM.releasePB(2)">
+            PB2
+          </button>
+        </div>
+        <div style="text-align: center; font-size: 10px; color: #7f8c8d; margin-top: -5px;">
+          Press &amp; hold both buttons simultaneously
+        </div>
+        <button class="btn" id="btnBothPB" style="margin-top:10px; text-align:center; background:#5b2080; border-color:#7b30a0; color:#fff; font-weight:700;"
+          onmousedown="SIM.pressBoth()" onmouseup="SIM.releaseBoth()"
+          onmouseleave="SIM.releaseBoth()"
+          ontouchstart="SIM.pressBoth()" ontouchend="SIM.releaseBoth()">
+          &#9995;&#9995; PRESS BOTH PB1+PB2
+        </button>
+      </div>
+
+      <!-- Reset -->
+      <button class="btn btn-reset" onclick="SIM.reset()">RESET SIMULATION</button>
+
+      <!-- Safety Presentation -->
+      <button class="safety-btn" onclick="SAFETY.open()">
+        &#9888; מצגת בטיחות - תקלות מסוכנות
+      </button>
+
+      <!-- Instructions -->
+      <div class="instructions">
+        <strong>How to operate:</strong><br>
+        1. Close the paper cylinder<br>
+        2. Press &amp; hold both PB1 and PB2 together<br>
+        3. Watch the cutting cycle execute<br>
+        <br>
+        <strong>Note:</strong> Releasing any safety input during the cycle will immediately stop the system.
+      </div>
+
+      <!-- Event Log -->
+      <div class="control-group" style="margin-top: 15px;">
+        <div class="control-group-title">Event Log</div>
+        <div class="event-log" id="eventLog"></div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- CENTER: MACHINE VISUALIZATION -->
+  <div class="machine-area">
+    <!-- Machine Visual -->
+    <div class="panel machine-visual">
+      <div class="panel-header">Machine Visualization</div>
+      <div class="panel-body machine-svg-container">
+        <svg id="machineSVG" viewBox="40 -10 780 440" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+          <!-- Background -->
+          <defs>
+            <linearGradient id="bgGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#282c34"/>
+              <stop offset="100%" stop-color="#1a1d23"/>
+            </linearGradient>
+            <linearGradient id="knifeGrad" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stop-color="#e8c820"/>
+              <stop offset="100%" stop-color="#c8a810"/>
+            </linearGradient>
+            <linearGradient id="pumpGrad" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0%" stop-color="#5a5a6a"/>
+              <stop offset="100%" stop-color="#3a3a4a"/>
+            </linearGradient>
+            <filter id="glow">
+              <feGaussianBlur stdDeviation="3" result="blur"/>
+              <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+            </filter>
+          </defs>
+
+          <rect x="40" y="-10" width="780" height="440" fill="url(#bgGrad)"/>
+
+          <!-- ===== MACHINE FRAME "ח" SHAPE - HEAVY INDUSTRIAL ===== -->
+          <!-- Left column (thick steel plate) -->
+          <rect x="130" y="35" width="45" height="270" rx="2" fill="#6e7075" stroke="#8a8b8f" stroke-width="1.5"/>
+          <rect x="133" y="38" width="39" height="264" rx="1" fill="#5a5c60" opacity="0.7"/>
+          <!-- Left column edge highlight -->
+          <line x1="133" y1="38" x2="133" y2="302" stroke="#8a8b8f" stroke-width="0.5" opacity="0.5"/>
+          <!-- Left column bolts -->
+          <circle cx="152" cy="65" r="4" fill="#555" stroke="#777" stroke-width="1.5"/>
+          <circle cx="152" cy="65" r="1.5" fill="#444"/>
+          <circle cx="152" cy="110" r="4" fill="#555" stroke="#777" stroke-width="1.5"/>
+          <circle cx="152" cy="110" r="1.5" fill="#444"/>
+          <circle cx="152" cy="200" r="4" fill="#555" stroke="#777" stroke-width="1.5"/>
+          <circle cx="152" cy="200" r="1.5" fill="#444"/>
+          <circle cx="152" cy="260" r="4" fill="#555" stroke="#777" stroke-width="1.5"/>
+          <circle cx="152" cy="260" r="1.5" fill="#444"/>
+
+          <!-- Right column (thick steel plate) -->
+          <rect x="385" y="35" width="45" height="270" rx="2" fill="#6e7075" stroke="#8a8b8f" stroke-width="1.5"/>
+          <rect x="388" y="38" width="39" height="264" rx="1" fill="#5a5c60" opacity="0.7"/>
+          <!-- Right column edge highlight -->
+          <line x1="427" y1="38" x2="427" y2="302" stroke="#8a8b8f" stroke-width="0.5" opacity="0.5"/>
+          <!-- Right column bolts -->
+          <circle cx="408" cy="65" r="4" fill="#555" stroke="#777" stroke-width="1.5"/>
+          <circle cx="408" cy="65" r="1.5" fill="#444"/>
+          <circle cx="408" cy="110" r="4" fill="#555" stroke="#777" stroke-width="1.5"/>
+          <circle cx="408" cy="110" r="1.5" fill="#444"/>
+          <circle cx="408" cy="200" r="4" fill="#555" stroke="#777" stroke-width="1.5"/>
+          <circle cx="408" cy="200" r="1.5" fill="#444"/>
+          <circle cx="408" cy="260" r="4" fill="#555" stroke="#777" stroke-width="1.5"/>
+          <circle cx="408" cy="260" r="1.5" fill="#444"/>
+
+          <!-- Top beam (massive, connecting columns) -->
+          <rect x="130" y="35" width="300" height="40" rx="2" fill="#7a7c80" stroke="#8a8b8f" stroke-width="1.5"/>
+          <rect x="133" y="38" width="294" height="34" rx="1" fill="#686a6f"/>
+          <!-- Top beam details -->
+          <line x1="135" y1="55" x2="425" y2="55" stroke="#8a8b8f" stroke-width="0.5" opacity="0.4"/>
+          <!-- ===== HYDRAULIC PISTON (angled, from top-left) ===== -->
+          <!-- Piston cylinder body (at angle, mounted top-left) -->
+          <g id="pistonAssembly">
+            <!-- Piston mounting bracket on left column top -->
+            <rect x="120" y="25" width="25" height="18" rx="3" fill="#5a5c60" stroke="#7a7c80" stroke-width="1"/>
+            <circle cx="132" cy="34" r="4" fill="#555" stroke="#777" stroke-width="1.5"/>
+            <circle cx="132" cy="34" r="1.5" fill="#444"/>
+            <!-- Cylinder body (angled) -->
+            <line x1="140" y1="34" x2="260" y2="78" stroke="#778" stroke-width="18" stroke-linecap="round"/>
+            <line x1="140" y1="34" x2="260" y2="78" stroke="#667" stroke-width="14" stroke-linecap="round"/>
+            <!-- Cylinder detail lines -->
+            <line x1="145" y1="32" x2="255" y2="76" stroke="#8a8b8f" stroke-width="0.5" opacity="0.4"/>
+            <!-- Piston rod (extends from cylinder toward knife) -->
+            <line x1="250" y1="74" x2="280" y2="86" stroke="#b0b0b0" stroke-width="8" stroke-linecap="round" id="pistonRod"/>
+            <line x1="250" y1="74" x2="280" y2="86" stroke="#c8c8c8" stroke-width="4" stroke-linecap="round"/>
+            <!-- Piston eye/pin connecting to knife holder -->
+            <circle cx="280" cy="86" r="5" fill="#5a5c60" stroke="#7a7c80" stroke-width="1.5"/>
+            <circle cx="280" cy="86" r="2" fill="#444"/>
+            <!-- Hydraulic hose connections -->
+            <path d="M135,28 Q120,15 110,15 Q95,15 90,28" fill="none" stroke="#222" stroke-width="4" stroke-linecap="round"/>
+            <path d="M135,28 Q120,15 110,15 Q95,15 90,28" fill="none" stroke="#333" stroke-width="2" stroke-linecap="round"/>
+            <path d="M135,40 Q120,50 105,48 Q90,46 85,35" fill="none" stroke="#222" stroke-width="3.5" stroke-linecap="round"/>
+            <path d="M135,40 Q120,50 105,48 Q90,46 85,35" fill="none" stroke="#333" stroke-width="1.5" stroke-linecap="round"/>
+          </g>
+
+          <!-- Transparent safety guard (polycarbonate) -->
+          <rect x="175" y="80" width="210" height="185" rx="3" fill="rgba(100,180,255,0.06)" stroke="rgba(150,200,255,0.25)" stroke-width="1.5" stroke-dasharray="none"/>
+          <line x1="175" y1="80" x2="175" y2="265" stroke="rgba(200,230,255,0.15)" stroke-width="1"/>
+          <text x="280" y="95" text-anchor="middle" font-size="7" fill="rgba(150,200,255,0.3)">SAFETY GUARD</text>
+
+          <!-- Table / cutting surface -->
+          <rect x="175" y="268" width="210" height="10" rx="2" class="machine-table"/>
+          <rect x="175" y="269" width="210" height="3" rx="1" fill="#6a6a6a" opacity="0.3"/>
+
+          <!-- Base/feet -->
+          <rect x="125" y="302" width="55" height="10" rx="2" fill="#4a4c50" stroke="#5a5c60" stroke-width="1"/>
+          <rect x="380" y="302" width="55" height="10" rx="2" fill="#4a4c50" stroke="#5a5c60" stroke-width="1"/>
+          <!-- Floor line -->
+          <line x1="100" y1="312" x2="530" y2="312" stroke="#3a3f4a" stroke-width="1" opacity="0.5"/>
+
+          <!-- ===== PB1 & PB2 PUSHBUTTONS (left side of machine) ===== -->
+          <g id="svgPB1" transform="translate(75, 180)" style="cursor:pointer;"
+             onmousedown="SIM.pressPB(1)" onmouseup="SIM.releasePB(1)" onmouseleave="SIM.releasePB(1)"
+             ontouchstart="SIM.pressPB(1)" ontouchend="SIM.releasePB(1)">
+            <!-- Button housing -->
+            <rect x="-18" y="-12" width="36" height="36" rx="6" fill="#2a2d35" stroke="#4a4d55" stroke-width="1.5"/>
+            <!-- Button face -->
+            <circle cx="0" cy="6" r="12" fill="#2d8a4e" stroke="#1a6a38" stroke-width="2" id="svgPB1face"/>
+            <circle cx="0" cy="6" r="8" fill="#3aa060" id="svgPB1inner"/>
+            <!-- Highlight -->
+            <ellipse cx="-2" cy="2" rx="4" ry="3" fill="rgba(255,255,255,0.15)"/>
+            <text x="0" y="32" text-anchor="middle" font-size="8" fill="#8a8d95" font-weight="700">PB1</text>
+          </g>
+          <g id="svgPB2" transform="translate(75, 240)" style="cursor:pointer;"
+             onmousedown="SIM.pressPB(2)" onmouseup="SIM.releasePB(2)" onmouseleave="SIM.releasePB(2)"
+             ontouchstart="SIM.pressPB(2)" ontouchend="SIM.releasePB(2)">
+            <!-- Button housing -->
+            <rect x="-18" y="-12" width="36" height="36" rx="6" fill="#2a2d35" stroke="#4a4d55" stroke-width="1.5"/>
+            <!-- Button face -->
+            <circle cx="0" cy="6" r="12" fill="#2d8a4e" stroke="#1a6a38" stroke-width="2" id="svgPB2face"/>
+            <circle cx="0" cy="6" r="8" fill="#3aa060" id="svgPB2inner"/>
+            <!-- Highlight -->
+            <ellipse cx="-2" cy="2" rx="4" ry="3" fill="rgba(255,255,255,0.15)"/>
+            <text x="0" y="32" text-anchor="middle" font-size="8" fill="#8a8d95" font-weight="700">PB2</text>
+          </g>
+
+          <!-- ===== KNIFE (YELLOW) ===== -->
+          <g id="knifeGroup" transform="translate(0, 0)">
+            <!-- Guide rails (slots in columns) -->
+            <rect x="175" y="83" width="5" height="24" rx="1" fill="#555" stroke="#777" stroke-width="0.5"/>
+            <rect x="380" y="83" width="5" height="24" rx="1" fill="#555" stroke="#777" stroke-width="0.5"/>
+            <!-- Knife holder (heavy bar) -->
+            <rect x="178" y="82" width="204" height="22" rx="2" fill="#5a5c60" stroke="#7a7c80" stroke-width="1.5"/>
+            <rect x="181" y="84" width="198" height="18" rx="1" fill="#505255"/>
+            <!-- Knife blade (YELLOW) - angled cutting edge like real guillotine -->
+            <polygon points="178,104 382,104 382,112 185,130" fill="url(#knifeGrad)" stroke="#b89c10" stroke-width="1" class="knife-blade" id="knifeBlade"/>
+            <!-- Blade bevel/grind line -->
+            <line x1="382" y1="108" x2="185" y2="126" stroke="#d4b418" stroke-width="0.5" opacity="0.6"/>
+            <!-- Sharp cutting edge (angled) -->
+            <line x1="382" y1="112" x2="185" y2="130" stroke="#e74c3c" stroke-width="2"/>
+            <!-- Edge tip highlight -->
+            <line x1="382" y1="111" x2="185" y2="129" stroke="#fff" stroke-width="0.5" opacity="0.2"/>
+          </g>
+
+          <!-- ===== PAPER ROLL IN CENTER OF MACHINE ===== -->
+          <g id="cylinderGroup">
+            <!-- Shaft/axle across machine (between columns) -->
+            <rect x="175" y="188" width="210" height="10" rx="4" fill="#b0b0b0" stroke="#c8c8c8" stroke-width="1" id="cylinderRod"/>
+            <!-- Shaft highlight -->
+            <line x1="180" y1="190" x2="380" y2="190" stroke="rgba(255,255,255,0.2)" stroke-width="1.5"/>
+            <!-- Shaft extends out toward operator (right side) -->
+            <rect x="430" y="189" width="35" height="8" rx="3" fill="#b0b0b0" stroke="#c8c8c8" stroke-width="0.8"/>
+            <line x1="432" y1="190" x2="460" y2="190" stroke="rgba(255,255,255,0.15)" stroke-width="1"/>
+            <!-- Bearing on left column -->
+            <rect x="170" y="184" width="10" height="18" rx="3" fill="#4a4c50" stroke="#6a6c70" stroke-width="1"/>
+            <!-- Bearing on right column -->
+            <rect x="380" y="184" width="10" height="18" rx="3" fill="#4a4c50" stroke="#6a6c70" stroke-width="1"/>
+
+            <!-- Large paper roll (sitting ON the shaft, in center of machine) -->
+            <g id="paperRollGroup">
+              <!-- Roll shadow -->
+              <ellipse cx="282" cy="195" rx="35" ry="35" fill="rgba(0,0,0,0.12)" id="rollShadow"/>
+              <!-- Roll body -->
+              <ellipse cx="280" cy="193" rx="33" ry="33" fill="#e8e2d4" stroke="#ccc6b6" stroke-width="1.5" id="cylinderBody" class="cylinder-body cylinder-open"/>
+              <!-- Roll layers (concentric circles to show paper layers) -->
+              <ellipse cx="280" cy="193" rx="28" ry="28" fill="none" stroke="#d8d2c4" stroke-width="0.5" opacity="0.6" id="rollLayer1"/>
+              <ellipse cx="280" cy="193" rx="23" ry="23" fill="none" stroke="#d8d2c4" stroke-width="0.5" opacity="0.5" id="rollLayer2"/>
+              <ellipse cx="280" cy="193" rx="18" ry="18" fill="none" stroke="#d8d2c4" stroke-width="0.5" opacity="0.4" id="rollLayer3"/>
+              <ellipse cx="280" cy="193" rx="13" ry="13" fill="none" stroke="#d8d2c4" stroke-width="0.5" opacity="0.3" id="rollLayer4"/>
+              <!-- Roll center hole (cardboard core visible) -->
+              <ellipse cx="280" cy="193" rx="8" ry="8" fill="#a08060" stroke="#8a6a4a" stroke-width="1"/>
+              <ellipse cx="280" cy="193" rx="5" ry="5" fill="#886a4a" stroke="#7a5a3a" stroke-width="0.5"/>
+              <!-- Roll 3D shine highlight -->
+              <ellipse cx="272" cy="180" rx="12" ry="16" fill="rgba(255,255,255,0.08)" id="rollerShine"/>
+            </g>
+
+            <!-- Paper feeding down from roll toward cutting area -->
+            <path d="M280,226 L280,265" fill="none" stroke="#f0eadc" stroke-width="1.5" opacity="0.5"/>
+
+            <!-- Labels -->
+            <text x="280" y="240" class="component-label" text-anchor="middle" font-size="8">PAPER ROLL</text>
+            <text x="460" y="185" class="component-label" text-anchor="middle" font-size="7" fill="#f39c12">▶ OPERATOR</text>
+          </g>
+
+          <!-- ===== WASTE BIN (Yellow, like in photo) ===== -->
+          <g id="wasteBin">
+            <!-- Bin body (trapezoid, wider at top) -->
+            <polygon points="210,310 350,310 340,400 220,400" fill="#c8a020" stroke="#a88010" stroke-width="2"/>
+            <!-- Bin inner shadow -->
+            <polygon points="215,313 345,313 336,397 223,397" fill="#b89018" opacity="0.7"/>
+            <!-- Bin rim -->
+            <rect x="205" y="306" width="150" height="6" rx="2" fill="#d8b030" stroke="#a88010" stroke-width="1.5"/>
+            <!-- Bin label -->
+            <text x="280" y="365" text-anchor="middle" font-size="10" fill="#7a5a10" font-weight="700" opacity="0.6">קרטון</text>
+
+            <!-- Cut paper sheets falling/in bin -->
+            <g id="cutPaperInBin">
+              <!-- Sheets already in bin (stacked, slightly rotated) -->
+              <rect x="228" y="370" width="55" height="3" rx="1" fill="#f0eadc" stroke="#d8d0c0" stroke-width="0.5" transform="rotate(-3, 255, 371)"/>
+              <rect x="232" y="375" width="50" height="3" rx="1" fill="#ede7d8" stroke="#d8d0c0" stroke-width="0.5" transform="rotate(2, 257, 376)"/>
+              <rect x="226" y="380" width="58" height="3" rx="1" fill="#f2ece0" stroke="#d8d0c0" stroke-width="0.5" transform="rotate(-1, 255, 381)"/>
+              <rect x="230" y="385" width="52" height="3" rx="1" fill="#efe9da" stroke="#d8d0c0" stroke-width="0.5" transform="rotate(4, 256, 386)"/>
+              <rect x="234" y="390" width="48" height="3" rx="1" fill="#f0eadc" stroke="#d8d0c0" stroke-width="0.5" transform="rotate(-2, 258, 391)"/>
+            </g>
+
+            <!-- Falling paper sheet (animated during cut) -->
+            <rect x="250" y="280" width="60" height="2" rx="1" fill="#f0eadc" stroke="#d8d0c0" stroke-width="0.5" opacity="0" id="fallingPaper">
+            </rect>
+          </g>
+
+          <!-- Operator silhouette (standing in front, right side) -->
+          <g transform="translate(455, 185)" opacity="0.12">
+            <circle cx="20" cy="0" r="8" fill="#aaa"/>
+            <line x1="20" y1="8" x2="20" y2="42" stroke="#aaa" stroke-width="3"/>
+            <line x1="5" y1="18" x2="20" y2="22" stroke="#aaa" stroke-width="2"/>
+            <line x1="35" y1="18" x2="20" y2="22" stroke="#aaa" stroke-width="2"/>
+            <line x1="20" y1="42" x2="12" y2="68" stroke="#aaa" stroke-width="2"/>
+            <line x1="20" y1="42" x2="28" y2="68" stroke="#aaa" stroke-width="2"/>
+          </g>
+
+          <!-- ===== INDUCTIVE SENSOR (detects roll on shaft) ===== -->
+          <g id="sensorGroup">
+            <rect x="323" y="215" width="14" height="14" rx="3" id="sensorBody" class="sensor-body"/>
+            <circle cx="330" cy="222" r="4" id="sensorGlow" class="sensor-glow"/>
+            <text x="330" y="240" class="component-label" text-anchor="middle" font-size="7">SENSOR</text>
+          </g>
+
+          <!-- ===== SOLENOID VALVE SV1 ===== -->
+          <g id="sv1Group" transform="translate(600, 30)">
+            <rect x="0" y="0" width="60" height="35" rx="4" id="sv1Body" class="sv-body"/>
+            <!-- Solenoid symbol -->
+            <rect x="5" y="5" width="12" height="25" rx="2" fill="#666" stroke="#888" stroke-width="1"/>
+            <line x1="22" y1="17" x2="50" y2="17" stroke="#888" stroke-width="1.5"/>
+            <!-- Valve ports -->
+            <circle cx="30" cy="5" r="3" fill="#555" stroke="#777"/>
+            <circle cx="45" cy="5" r="3" fill="#555" stroke="#777"/>
+            <circle cx="30" cy="30" r="3" fill="#555" stroke="#777"/>
+            <circle cx="45" cy="30" r="3" fill="#555" stroke="#777"/>
+            <text x="30" y="50" class="component-label-big" text-anchor="middle">SV1</text>
+            <!-- Status LED -->
+            <circle cx="55" cy="10" r="4" id="sv1Led" fill="#444"/>
+          </g>
+
+          <!-- ===== RELAY R1 ===== -->
+          <g id="r1Group" transform="translate(600, 100)">
+            <rect x="0" y="0" width="60" height="35" rx="4" fill="#3a3a4a" stroke="#5a5a6a" stroke-width="1.5"/>
+            <!-- Coil symbol -->
+            <path d="M15,10 Q20,5 25,10 Q30,15 35,10 Q40,5 45,10" fill="none" stroke="#888" stroke-width="1.5" id="r1Coil"/>
+            <text x="30" y="30" class="component-label" text-anchor="middle" font-size="10">R1</text>
+            <circle cx="55" cy="10" r="4" id="r1Led" fill="#444"/>
+          </g>
+
+          <!-- ===== TWO-HAND CONTROL DEVICE ===== -->
+          <g id="twoHandGroup" transform="translate(600, 170)">
+            <rect x="0" y="0" width="60" height="40" rx="4" fill="#3a3a4a" stroke="#5a5a6a" stroke-width="1.5"/>
+            <!-- Hand symbols -->
+            <text x="15" y="22" font-size="14">&#9995;</text>
+            <text x="35" y="22" font-size="14">&#9995;</text>
+            <text x="30" y="50" class="component-label" text-anchor="middle" font-size="8">2-HAND CTL</text>
+            <circle cx="55" cy="10" r="4" id="twoHandLed" fill="#444"/>
+          </g>
+
+          <!-- ===== PUMP + MOTOR ===== -->
+          <g id="pumpGroup" transform="translate(600, 250)">
+            <!-- Motor body -->
+            <circle cx="30" cy="30" r="28" fill="url(#pumpGrad)" stroke="#6a6a7a" stroke-width="2" id="pumpMotorBody"/>
+            <!-- Motor protection indicator -->
+            <rect x="62" y="10" width="30" height="16" rx="3" fill="#3a3a4a" stroke="#5a5a6a" stroke-width="1"/>
+            <text x="77" y="22" class="component-label" text-anchor="middle" font-size="7" fill="#aaa">16A</text>
+            <!-- Fan blades -->
+            <g id="pumpFan" style="transform-origin: 630px 280px;">
+              <line x1="30" y1="10" x2="30" y2="50" stroke="#aaa" stroke-width="2"/>
+              <line x1="10" y1="30" x2="50" y2="30" stroke="#aaa" stroke-width="2"/>
+              <line x1="16" y1="16" x2="44" y2="44" stroke="#aaa" stroke-width="1.5"/>
+              <line x1="44" y1="16" x2="16" y2="44" stroke="#aaa" stroke-width="1.5"/>
+            </g>
+            <!-- Center -->
+            <circle cx="30" cy="30" r="5" fill="#333" stroke="#555"/>
+            <text x="30" y="72" class="component-label-big" text-anchor="middle">PUMP</text>
+            <!-- Contactor indicator -->
+            <rect x="-5" y="62" width="70" height="14" rx="3" fill="#282c34" stroke="#3a3f4a" stroke-width="1"/>
+            <text x="30" y="73" class="component-label" text-anchor="middle" font-size="8" id="contactorLabel" fill="#666">CONTACTOR: OFF</text>
+            <!-- Status LED -->
+            <circle cx="55" cy="10" r="4" id="pumpLed" fill="#444"/>
+          </g>
+
+          <!-- ===== HYDRAULIC LINES ===== -->
+          <!-- SV1 to Piston (angled, goes to top-left) -->
+          <path d="M630,65 L630,75 L100,75 L100,30 L120,30" class="hydraulic-line" id="hydLine1"/>
+          <!-- Pump to SV1 -->
+          <path d="M630,250 L630,230 L680,230 L680,65" class="hydraulic-line" id="hydLine2"/>
+
+          <!-- ===== WIRING (simplified visual) ===== -->
+          <!-- Sensor to R1 -->
+          <line x1="337" y1="222" x2="570" y2="222" class="wire" id="wireSensorR1a"/>
+          <line x1="570" y1="222" x2="570" y2="117" class="wire" id="wireSensorR1b"/>
+          <line x1="570" y1="117" x2="600" y2="117" class="wire" id="wireSensorR1c"/>
+
+          <!-- 24V supply indicator -->
+          <g transform="translate(710, 10)">
+            <rect x="0" y="0" width="50" height="20" rx="3" fill="#2c1010" stroke="#c0392b" stroke-width="1.5" id="supply24v"/>
+            <text x="25" y="14" text-anchor="middle" font-size="10" font-weight="700" fill="#e74c3c">24V DC</text>
+          </g>
+
+          <!-- ===== LABELS ===== -->
+          <text x="280" y="27" class="component-label-big" text-anchor="middle" font-size="14" fill="#7f8c8d">PAPER GUILLOTINE</text>
+
+          <!-- Cut indicator -->
+          <line x1="185" y1="253" x2="375" y2="253" stroke="#e74c3c" stroke-width="1" stroke-dasharray="4 3" opacity="0.4" id="cutLine"/>
+
+        </svg>
+      </div>
+    </div>
+
+    <!-- LADDER LOGIC DIAGRAM -->
+    <div class="panel ladder-diagram">
+      <div class="panel-header">Control Logic Diagram</div>
+      <div class="panel-body">
+        <svg id="ladderSVG" viewBox="0 0 760 220" width="100%" height="100%" preserveAspectRatio="xMidYMid meet">
+          <rect width="760" height="220" fill="#1a1d23"/>
+
+          <!-- Power rails -->
+          <line x1="30" y1="10" x2="30" y2="210" stroke="#c0392b" stroke-width="3"/>
+          <line x1="730" y1="10" x2="730" y2="210" stroke="#2980b9" stroke-width="3"/>
+          <text x="30" y="8" text-anchor="middle" font-size="10" fill="#c0392b" font-weight="700">L+</text>
+          <text x="730" y="8" text-anchor="middle" font-size="10" fill="#2980b9" font-weight="700">L-</text>
+
+          <!-- RUNG 1: Sensor → R1 -->
+          <line x1="30" y1="40" x2="80" y2="40" class="ladder-wire" id="lw1a"/>
+          <!-- Sensor contact -->
+          <line x1="80" y1="30" x2="80" y2="50" stroke="#888" stroke-width="2" id="lc_sensor_l"/>
+          <line x1="120" y1="30" x2="120" y2="50" stroke="#888" stroke-width="2" id="lc_sensor_r"/>
+          <text x="100" y="28" text-anchor="middle" font-size="8" fill="#7f8c8d">SENSOR</text>
+          <line x1="80" y1="40" x2="120" y2="40" class="ladder-wire" stroke-dasharray="4 3" id="lc_sensor_bridge"/>
+
+          <line x1="120" y1="40" x2="200" y2="40" class="ladder-wire" id="lw1b"/>
+          <!-- R1 Coil -->
+          <circle cx="220" cy="40" r="15" class="ladder-coil" id="lcoil_r1"/>
+          <text x="220" y="44" text-anchor="middle" font-size="9" fill="#888" font-weight="600">R1</text>
+          <line x1="235" y1="40" x2="730" y2="40" class="ladder-wire" id="lw1c"/>
+
+          <!-- RUNG 2: R1 + PB1 + PB2 + 2HandCtl → SV1 -->
+          <line x1="30" y1="90" x2="140" y2="90" class="ladder-wire" id="lw2a"/>
+          <!-- R1 contact -->
+          <line x1="140" y1="80" x2="140" y2="100" stroke="#888" stroke-width="2"/>
+          <line x1="170" y1="80" x2="170" y2="100" stroke="#888" stroke-width="2"/>
+          <text x="155" y="78" text-anchor="middle" font-size="8" fill="#7f8c8d">R1</text>
+          <line x1="140" y1="90" x2="170" y2="90" class="ladder-wire" stroke-dasharray="4 3" id="lc_r1_bridge"/>
+
+          <line x1="170" y1="90" x2="210" y2="90" class="ladder-wire" id="lw2c"/>
+          <!-- PB1 contact -->
+          <line x1="210" y1="80" x2="210" y2="100" stroke="#888" stroke-width="2"/>
+          <line x1="240" y1="80" x2="240" y2="100" stroke="#888" stroke-width="2"/>
+          <text x="225" y="78" text-anchor="middle" font-size="8" fill="#7f8c8d">PB1</text>
+          <line x1="210" y1="90" x2="240" y2="90" class="ladder-wire" stroke-dasharray="4 3" id="lc_pb1_bridge"/>
+
+          <line x1="240" y1="90" x2="280" y2="90" class="ladder-wire" id="lw2d"/>
+          <!-- PB2 contact -->
+          <line x1="280" y1="80" x2="280" y2="100" stroke="#888" stroke-width="2"/>
+          <line x1="310" y1="80" x2="310" y2="100" stroke="#888" stroke-width="2"/>
+          <text x="295" y="78" text-anchor="middle" font-size="8" fill="#7f8c8d">PB2</text>
+          <line x1="280" y1="90" x2="310" y2="90" class="ladder-wire" stroke-dasharray="4 3" id="lc_pb2_bridge"/>
+
+          <line x1="310" y1="90" x2="360" y2="90" class="ladder-wire" id="lw2e"/>
+          <!-- 2-Hand Control module -->
+          <rect x="360" y="78" width="50" height="24" rx="3" fill="none" stroke="#888" stroke-width="1.5" id="lc_2hand_box"/>
+          <text x="385" y="93" text-anchor="middle" font-size="7" fill="#888">2-HAND</text>
+
+          <line x1="410" y1="90" x2="480" y2="90" class="ladder-wire" id="lw2f"/>
+          <!-- SV1 Coil -->
+          <circle cx="500" cy="90" r="15" class="ladder-coil" id="lcoil_sv1"/>
+          <text x="500" y="94" text-anchor="middle" font-size="9" fill="#888" font-weight="600">SV1</text>
+          <line x1="515" y1="90" x2="730" y2="90" class="ladder-wire" id="lw2g"/>
+
+          <!-- RUNG 3: SV1 contact → Timer -->
+          <line x1="30" y1="140" x2="80" y2="140" class="ladder-wire" id="lw3a"/>
+          <!-- SV1 aux contact -->
+          <line x1="80" y1="130" x2="80" y2="150" stroke="#888" stroke-width="2"/>
+          <line x1="110" y1="130" x2="110" y2="150" stroke="#888" stroke-width="2"/>
+          <text x="95" y="128" text-anchor="middle" font-size="8" fill="#7f8c8d">SV1</text>
+          <line x1="80" y1="140" x2="110" y2="140" class="ladder-wire" stroke-dasharray="4 3" id="lc_sv1_bridge"/>
+
+          <line x1="110" y1="140" x2="200" y2="140" class="ladder-wire" id="lw3b"/>
+          <!-- Timer coil -->
+          <rect x="200" y="127" width="50" height="26" rx="3" fill="none" stroke="#888" stroke-width="1.5" id="lcoil_timer_box"/>
+          <text x="225" y="143" text-anchor="middle" font-size="8" fill="#888">TMR 15s</text>
+          <line x1="250" y1="140" x2="730" y2="140" class="ladder-wire" id="lw3c"/>
+
+          <!-- RUNG 4: Timer contact → Pump Contactor → Motor -->
+          <line x1="30" y1="190" x2="80" y2="190" class="ladder-wire" id="lw4a"/>
+          <!-- Timer contact -->
+          <line x1="80" y1="180" x2="80" y2="200" stroke="#888" stroke-width="2"/>
+          <line x1="110" y1="180" x2="110" y2="200" stroke="#888" stroke-width="2"/>
+          <text x="95" y="178" text-anchor="middle" font-size="8" fill="#7f8c8d">TMR</text>
+          <line x1="80" y1="190" x2="110" y2="190" class="ladder-wire" stroke-dasharray="4 3" id="lc_tmr_bridge"/>
+
+          <line x1="110" y1="190" x2="180" y2="190" class="ladder-wire" id="lw4b"/>
+          <!-- Motor protection -->
+          <rect x="180" y="180" width="40" height="20" rx="3" fill="none" stroke="#888" stroke-width="1.5" id="lc_mp_box"/>
+          <text x="200" y="193" text-anchor="middle" font-size="7" fill="#888">16A</text>
+
+          <line x1="220" y1="190" x2="280" y2="190" class="ladder-wire" id="lw4c"/>
+          <!-- Pump Contactor Coil -->
+          <circle cx="300" cy="190" r="15" class="ladder-coil" id="lcoil_contactor"/>
+          <text x="300" y="194" text-anchor="middle" font-size="8" fill="#888" font-weight="600">KM1</text>
+          <line x1="315" y1="190" x2="400" y2="190" class="ladder-wire" id="lw4d"/>
+          <!-- Motor symbol -->
+          <circle cx="420" cy="190" r="15" fill="none" stroke="#888" stroke-width="2" id="lmotor"/>
+          <text x="420" y="194" text-anchor="middle" font-size="9" fill="#888" font-weight="700">M</text>
+          <line x1="435" y1="190" x2="730" y2="190" class="ladder-wire" id="lw4e"/>
+
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT PANEL: STATUS -->
+  <div class="panel">
+    <div class="panel-header">System Status</div>
+    <div class="panel-body">
+
+      <div class="control-group">
+        <div class="control-group-title">Safety Inputs</div>
+        <div class="status-item off" id="stSensor">
+          <div class="status-led"></div>
+          <div class="status-label">Inductive Sensor</div>
+          <div class="status-value">OFF</div>
+        </div>
+        <div class="status-item off" id="stR1">
+          <div class="status-led"></div>
+          <div class="status-label">Relay R1</div>
+          <div class="status-value">OFF</div>
+        </div>
+        <div class="status-item off" id="stPB1">
+          <div class="status-led"></div>
+          <div class="status-label">Pushbutton 1</div>
+          <div class="status-value">OFF</div>
+        </div>
+        <div class="status-item off" id="stPB2">
+          <div class="status-led"></div>
+          <div class="status-label">Pushbutton 2</div>
+          <div class="status-value">OFF</div>
+        </div>
+        <div class="status-item off" id="stTwoHand">
+          <div class="status-led"></div>
+          <div class="status-label">Two-Hand Control</div>
+          <div class="status-value">OFF</div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="control-group-title">Outputs</div>
+        <div class="status-item off" id="stSV1">
+          <div class="status-led"></div>
+          <div class="status-label">Solenoid Valve SV1</div>
+          <div class="status-value">OFF</div>
+        </div>
+        <div class="status-item off" id="stTimer">
+          <div class="status-led"></div>
+          <div class="status-label">Timer (15s)</div>
+          <div class="status-value">OFF</div>
+        </div>
+        <div class="status-item off" id="stContactor">
+          <div class="status-led"></div>
+          <div class="status-label">Pump Contactor KM1</div>
+          <div class="status-value">OFF</div>
+        </div>
+        <div class="status-item off" id="stPump">
+          <div class="status-led"></div>
+          <div class="status-label">Pump Motor</div>
+          <div class="status-value">OFF</div>
+        </div>
+      </div>
+
+      <!-- Timer Display -->
+      <div class="timer-display" id="timerDisplay">
+        <div class="timer-label">Cycle Timer</div>
+        <div class="timer-value" id="timerValue">15.0</div>
+        <div class="timer-bar">
+          <div class="timer-bar-fill" id="timerBarFill"></div>
+        </div>
+      </div>
+
+      <!-- Knife Position -->
+      <div class="knife-position">
+        <div class="kp-label">Knife Position</div>
+        <div class="knife-track">
+          <div class="knife-track-marker" id="knifeTrackMarker"></div>
+        </div>
+        <div class="knife-labels">
+          <span>UP</span>
+          <span>DOWN</span>
+        </div>
+        <div style="text-align: center; margin-top: 6px; font-size: 12px; font-weight: 700;" id="knifePercent">0%</div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ============================================================
+// PAPER GUILLOTINE CONTROL SIMULATION
+// Modular logic - easy to edit timing, add sensors, change outputs
+// ============================================================
+
+const SIM = (() => {
+
+  // ===== CONFIGURATION (editable) =====
+  const CONFIG = {
+    TIMER_DURATION: 15,       // seconds
+    KNIFE_DOWN_TIME: 4,       // seconds to reach bottom
+    KNIFE_UP_TIME: 5,         // seconds to return up
+    SCAN_INTERVAL: 50,        // ms between logic scans
+    TWO_HAND_WINDOW: 500,     // ms window for two-hand check (not used in simplified sim)
+  };
+
+  // ===== STATE =====
+  const state = {
+    // Inputs
+    doorClosed: true,
+    cylinderClosed: false,
+    pb1Pressed: false,
+    pb2Pressed: false,
+
+    // Internal
+    sensorActive: false,
+    r1Energized: false,
+    twoHandValid: false,
+    cycleActive: false,
+
+    // Outputs
+    sv1Energized: false,
+    timerRunning: false,
+    timerValue: CONFIG.TIMER_DURATION,
+    pumpContactorOn: false,
+    pumpRunning: false,
+
+    // Knife
+    knifePosition: 0,        // 0 = up, 1 = down
+    knifeMoving: false,
+    knifeDirection: 'none',   // 'down', 'up', 'none'
+
+    // Roll
+    rollRadius: 33,           // current roll radius (decreases with each cut)
+    rollMinRadius: 8,         // cardboard core radius
+    rollCutAmount: 3,         // radius decrease per cut
+
+    // Cycle phase
+    cyclePhase: 'idle',       // 'idle', 'cutting', 'returning', 'complete'
+  };
+
+  let scanTimer = null;
+  let lastTimestamp = 0;
+  let pumpFanAngle = 0;
+
+  // ===== EVENT LOG =====
+  function log(msg, type = '') {
+    const el = document.getElementById('eventLog');
+    const now = new Date();
+    const ts = now.toLocaleTimeString('en-US', { hour12: false }) + '.' + String(now.getMilliseconds()).padStart(3, '0');
+    const div = document.createElement('div');
+    div.className = type ? `log-${type}` : '';
+    div.innerHTML = `<span class="log-time">[${ts}]</span> ${msg}`;
+    el.prepend(div);
+    // Keep max 50 entries
+    while (el.children.length > 50) el.removeChild(el.lastChild);
+  }
+
+  // ===== INPUT HANDLERS =====
+  function toggleCylinder() {
+    state.cylinderClosed = !state.cylinderClosed;
+    log(`Cylinder ${state.cylinderClosed ? 'CLOSED' : 'OPENED'}`, state.cylinderClosed ? 'on' : 'off');
+    updateUI();
+  }
+
+  function pressPB(n) {
+    if (n === 1 && !state.pb1Pressed) {
+      state.pb1Pressed = true;
+      log('PB1 pressed', 'on');
+    }
+    if (n === 2 && !state.pb2Pressed) {
+      state.pb2Pressed = true;
+      log('PB2 pressed', 'on');
+    }
+    updateUI();
+  }
+
+  function releasePB(n) {
+    if (n === 1 && state.pb1Pressed) {
+      state.pb1Pressed = false;
+      log('PB1 released', 'off');
+    }
+    if (n === 2 && state.pb2Pressed) {
+      state.pb2Pressed = false;
+      log('PB2 released', 'off');
+    }
+    updateUI();
+  }
+
+  function pressBoth() {
+    if (!state.pb1Pressed) { state.pb1Pressed = true; log('PB1 pressed', 'on'); }
+    if (!state.pb2Pressed) { state.pb2Pressed = true; log('PB2 pressed', 'on'); }
+    updateUI();
+  }
+
+  function releaseBoth() {
+    if (state.pb1Pressed) { state.pb1Pressed = false; log('PB1 released', 'off'); }
+    if (state.pb2Pressed) { state.pb2Pressed = false; log('PB2 released', 'off'); }
+    updateUI();
+  }
+
+  // ===== CONTROL LOGIC (runs every scan cycle) =====
+  function controlLogicScan(dt) {
+    const prevState = { ...state };
+
+    // --- Sensor logic ---
+    // Inductive sensor detects cylinder in closed position
+    state.sensorActive = state.cylinderClosed;
+
+    // --- R1 logic ---
+    // R1 energized when sensor outputs 24V
+    state.r1Energized = state.sensorActive;
+
+    // --- Two-hand control validation ---
+    // Both pushbuttons must be pressed together
+    state.twoHandValid = state.pb1Pressed && state.pb2Pressed;
+
+    // --- Cycle start conditions ---
+    const allConditionsMet = state.sensorActive &&
+                             state.r1Energized &&
+                             state.twoHandValid;
+
+    // --- Cycle logic ---
+    if (state.cyclePhase === 'idle' || state.cyclePhase === 'returning') {
+      if (allConditionsMet) {
+        // START / RE-START CYCLE
+        state.cycleActive = true;
+        state.sv1Energized = true;
+        if (!state.timerRunning) {
+          state.timerRunning = true;
+          state.timerValue = CONFIG.TIMER_DURATION;
+        }
+        state.pumpContactorOn = true;
+        state.pumpRunning = true;
+        state.knifeDirection = 'down';
+        state.knifeMoving = true;
+        state.cyclePhase = 'cutting';
+        if (state.knifePosition === 0) {
+          log('=== CYCLE STARTED ===', 'warn');
+        } else {
+          log('Buttons pressed again - knife going DOWN', 'warn');
+        }
+        log('SV1 energized', 'on');
+      }
+    }
+
+    if (state.cyclePhase === 'cutting' || state.cyclePhase === 'returning') {
+      // Safety interlock: if sensor lost (cylinder not in place), SV1 de-energizes
+      // Spring-loaded coil returns knife UP automatically
+      if (!state.r1Energized) {
+        if (state.sv1Energized) {
+          state.sv1Energized = false;
+          log('!!! SENSOR LOST - SV1 de-energized !!!', 'off');
+          log('Spring-loaded coil returning knife UP', 'warn');
+        }
+        state.knifeDirection = 'up';
+        state.knifeMoving = true;
+        state.cyclePhase = 'returning';
+      }
+
+      // If pushbuttons released during cutting (knife going down), SV1 off, knife returns up
+      if (state.cyclePhase === 'cutting' && !state.twoHandValid) {
+        state.sv1Energized = false;
+        state.knifeDirection = 'up';
+        state.cyclePhase = 'returning';
+        log('Pushbuttons released - SV1 de-energized', 'off');
+        log('Knife returning UP', 'warn');
+      }
+    }
+
+    // --- Knife movement ---
+    if (state.knifeMoving && state.pumpRunning) {
+      if (state.knifeDirection === 'down') {
+        state.knifePosition += dt / CONFIG.KNIFE_DOWN_TIME;
+        if (state.knifePosition >= 1) {
+          state.knifePosition = 1;
+          state.knifeDirection = 'up';
+          // Cut the roll - decrease radius
+          if (state.rollRadius > state.rollMinRadius) {
+            state.rollRadius = Math.max(state.rollMinRadius, state.rollRadius - state.rollCutAmount);
+            log(`Roll cut! New radius: ${state.rollRadius.toFixed(0)}px`, 'warn');
+          } else {
+            log('Roll empty! Only cardboard core remains', 'off');
+          }
+          log('Knife reached roll surface - cutting complete', 'warn');
+          log('Knife returning UP', 'warn');
+          state.cyclePhase = 'returning';
+        }
+      } else if (state.knifeDirection === 'up') {
+        state.knifePosition -= dt / CONFIG.KNIFE_UP_TIME;
+        if (state.knifePosition <= 0) {
+          state.knifePosition = 0;
+          state.knifeMoving = false;
+          state.knifeDirection = 'none';
+          log('Knife returned to TOP', 'on');
+          // Knife is back up - end cycle, stop everything
+          state.sv1Energized = false;
+          state.timerRunning = false;
+          state.timerValue = CONFIG.TIMER_DURATION;
+          state.pumpContactorOn = false;
+          state.pumpRunning = false;
+          state.cycleActive = false;
+          state.cyclePhase = 'idle';
+          log('=== CYCLE COMPLETE ===', 'warn');
+        }
+      }
+    }
+
+    // --- Timer countdown ---
+    if (state.timerRunning) {
+      state.timerValue -= dt;
+      if (state.timerValue <= 0) {
+        state.timerValue = 0;
+        state.timerRunning = false;
+        state.pumpContactorOn = false;
+        state.pumpRunning = false;
+        log('Timer expired - 15s elapsed', 'off');
+        log('Pump contactor OFF', 'off');
+        log('Pump motor STOPPED', 'off');
+
+        // If knife hasn't returned, it stops where it is (pump off)
+        if (state.knifeMoving) {
+          state.knifeMoving = false;
+          state.knifeDirection = 'none';
+          log('Knife stopped (pump off)', 'off');
+        }
+
+        // Cycle ends
+        state.sv1Energized = false;
+        state.cycleActive = false;
+        state.cyclePhase = 'idle';
+        log('SV1 de-energized', 'off');
+        log('=== CYCLE COMPLETE ===', 'warn');
+      }
+    }
+
+    // If cycle was complete and timer still running, check
+    if (state.cyclePhase === 'complete' && !state.timerRunning) {
+      state.cyclePhase = 'idle';
+      state.cycleActive = false;
+      state.sv1Energized = false;
+    }
+  }
+
+  function emergencyStop() {
+    state.sv1Energized = false;
+    state.timerRunning = false;
+    state.timerValue = CONFIG.TIMER_DURATION;
+    state.pumpContactorOn = false;
+    state.pumpRunning = false;
+    state.knifeMoving = false;
+    state.knifeDirection = 'none';
+    state.cycleActive = false;
+    state.cyclePhase = 'idle';
+    // Don't reset knife position - it stays where it stopped
+    log('All outputs de-energized', 'off');
+  }
+
+  // ===== UI UPDATE =====
+  function updateUI() {
+    // --- Control buttons ---
+    const btnCyl = document.getElementById('btnCylinder');
+    btnCyl.classList.toggle('active', state.cylinderClosed);
+    btnCyl.querySelector('.btn-text').textContent = `Cylinder: ${state.cylinderClosed ? 'CLOSED' : 'OPEN'}`;
+
+    document.getElementById('btnPB1').classList.toggle('active', state.pb1Pressed);
+    document.getElementById('btnPB2').classList.toggle('active', state.pb2Pressed);
+
+    // --- Status indicators ---
+    setStatus('stSensor', state.sensorActive, state.sensorActive ? 'ACTIVE' : 'OFF');
+    setStatus('stR1', state.r1Energized, state.r1Energized ? 'ON' : 'OFF');
+    setStatus('stPB1', state.pb1Pressed, state.pb1Pressed ? 'PRESSED' : 'OFF');
+    setStatus('stPB2', state.pb2Pressed, state.pb2Pressed ? 'PRESSED' : 'OFF');
+    setStatus('stTwoHand', state.twoHandValid, state.twoHandValid ? 'VALID' : 'OFF');
+    setStatus('stSV1', state.sv1Energized, state.sv1Energized ? 'ON' : 'OFF');
+    setStatus('stTimer', state.timerRunning, state.timerRunning ? 'RUNNING' : 'OFF');
+    setStatus('stContactor', state.pumpContactorOn, state.pumpContactorOn ? 'ON' : 'OFF');
+    setStatus('stPump', state.pumpRunning, state.pumpRunning ? 'RUNNING' : 'OFF');
+
+    // --- Timer display ---
+    const timerDisp = document.getElementById('timerDisplay');
+    timerDisp.classList.toggle('active', state.timerRunning);
+    document.getElementById('timerValue').textContent = state.timerValue.toFixed(1);
+    const pct = ((CONFIG.TIMER_DURATION - state.timerValue) / CONFIG.TIMER_DURATION) * 100;
+    document.getElementById('timerBarFill').style.width = (state.timerRunning ? pct : 0) + '%';
+
+    // --- Knife position ---
+    const knifeTrack = document.getElementById('knifeTrackMarker');
+    knifeTrack.style.top = (state.knifePosition * 94) + 'px';
+    document.getElementById('knifePercent').textContent = Math.round(state.knifePosition * 100) + '%';
+
+    // --- Machine SVG ---
+    updateMachineSVG();
+
+    // --- Ladder diagram ---
+    updateLadder();
+  }
+
+  function setStatus(id, isOn, text) {
+    const el = document.getElementById(id);
+    el.classList.toggle('on', isOn);
+    el.classList.toggle('off', !isOn);
+    el.querySelector('.status-value').textContent = text;
+  }
+
+  // ===== MACHINE SVG UPDATE =====
+  function updateMachineSVG() {
+    // Paper Roll (centered in machine, on shaft)
+    const cylBody = document.getElementById('cylinderBody');
+    const rollerShine = document.getElementById('rollerShine');
+    const rollShadow = document.getElementById('rollShadow');
+    if (state.cylinderClosed) {
+      cylBody.setAttribute('class', 'cylinder-body cylinder-closed');
+    } else {
+      cylBody.setAttribute('class', 'cylinder-body cylinder-open');
+    }
+
+    // Sensor
+    const sensorBody = document.getElementById('sensorBody');
+    const sensorGlow = document.getElementById('sensorGlow');
+    if (state.sensorActive) {
+      sensorBody.setAttribute('class', 'sensor-body sensor-active');
+      sensorGlow.setAttribute('class', 'sensor-glow active');
+      sensorGlow.setAttribute('filter', 'url(#glow)');
+    } else {
+      sensorBody.setAttribute('class', 'sensor-body');
+      sensorGlow.setAttribute('class', 'sensor-glow');
+      sensorGlow.removeAttribute('filter');
+    }
+
+    // R1
+    const r1Led = document.getElementById('r1Led');
+    const r1Coil = document.getElementById('r1Coil');
+    r1Led.setAttribute('fill', state.r1Energized ? '#2ecc71' : '#444');
+    r1Coil.setAttribute('stroke', state.r1Energized ? '#f39c12' : '#888');
+
+    // Two Hand
+    const twoHandLed = document.getElementById('twoHandLed');
+    twoHandLed.setAttribute('fill', state.twoHandValid ? '#2ecc71' : '#444');
+
+    // SV1
+    const sv1Body = document.getElementById('sv1Body');
+    const sv1Led = document.getElementById('sv1Led');
+    sv1Body.setAttribute('class', state.sv1Energized ? 'sv-body sv-active' : 'sv-body');
+    sv1Led.setAttribute('fill', state.sv1Energized ? '#2ecc71' : '#444');
+
+    // Pump
+    const pumpLed = document.getElementById('pumpLed');
+    const pumpMotor = document.getElementById('pumpMotorBody');
+    const contactorLabel = document.getElementById('contactorLabel');
+    pumpLed.setAttribute('fill', state.pumpRunning ? '#2ecc71' : '#444');
+    pumpMotor.setAttribute('class', state.pumpRunning ? 'pump-running' : '');
+    contactorLabel.textContent = `CONTACTOR: ${state.pumpContactorOn ? 'ON' : 'OFF'}`;
+    contactorLabel.setAttribute('fill', state.pumpContactorOn ? '#2ecc71' : '#666');
+
+    // Pump fan rotation
+    const pumpFan = document.getElementById('pumpFan');
+    if (state.pumpRunning) {
+      pumpFanAngle = (pumpFanAngle + 5) % 360;
+      pumpFan.setAttribute('transform', `rotate(${pumpFanAngle}, 30, 30)`);
+    }
+
+    // Knife position - limited by roll surface
+    const knifeGroup = document.getElementById('knifeGroup');
+    // Knife blade tip (right side) is at y=112 when untranslated
+    // Roll top = 193 - rollRadius. Knife stops when blade reaches roll top.
+    const maxKnifeTravel = (193 - state.rollRadius) - 112;
+    const knifeY = state.knifePosition * maxKnifeTravel;
+    knifeGroup.setAttribute('transform', `translate(0, ${knifeY})`);
+    const knifeBlade = document.getElementById('knifeBlade');
+    knifeBlade.setAttribute('class', state.knifeMoving ? 'knife-blade active' : 'knife-blade');
+
+    // Update roll radius visually
+    const r = state.rollRadius;
+    cylBody.setAttribute('rx', String(r));
+    cylBody.setAttribute('ry', String(r));
+    if (rollShadow) {
+      rollShadow.setAttribute('rx', String(r + 2));
+      rollShadow.setAttribute('ry', String(r + 2));
+    }
+    // Update concentric layer circles
+    const layers = [['rollLayer1', 28], ['rollLayer2', 23], ['rollLayer3', 18], ['rollLayer4', 13]];
+    layers.forEach(([id, origR]) => {
+      const el = document.getElementById(id);
+      if (el) {
+        const scaledR = origR * (r / 33);
+        if (scaledR > state.rollMinRadius) {
+          el.setAttribute('rx', String(scaledR));
+          el.setAttribute('ry', String(scaledR));
+          el.setAttribute('opacity', String(0.3 + (origR / 28) * 0.3));
+        } else {
+          el.setAttribute('opacity', '0');
+        }
+      }
+    });
+
+    // Falling paper animation
+    const fallingPaper = document.getElementById('fallingPaper');
+    if (fallingPaper) {
+      if (state.knifePosition >= 0.95 && !fallingPaper._animating) {
+        fallingPaper._animating = true;
+        fallingPaper.setAttribute('opacity', '1');
+        const startY = 193 + state.rollRadius; // bottom of the roll
+        fallingPaper.setAttribute('y', String(startY));
+        let fy = startY;
+        const fallInterval = setInterval(() => {
+          fy += 3;
+          if (fy > 395) {
+            clearInterval(fallInterval);
+            fallingPaper.setAttribute('opacity', '0');
+            fallingPaper._animating = false;
+          } else {
+            fallingPaper.setAttribute('y', String(fy));
+            fallingPaper.setAttribute('opacity', String(Math.max(0, 1 - (fy - 370) / 30)));
+          }
+        }, 30);
+      }
+    }
+
+    // Hydraulic lines
+    const hydLine1 = document.getElementById('hydLine1');
+    const hydLine2 = document.getElementById('hydLine2');
+    if (state.pumpRunning && state.sv1Energized) {
+      hydLine1.setAttribute('class', 'hydraulic-line flowing');
+      hydLine2.setAttribute('class', 'hydraulic-line flowing');
+    } else if (state.sv1Energized) {
+      hydLine1.setAttribute('class', 'hydraulic-line active');
+      hydLine2.setAttribute('class', 'hydraulic-line active');
+    } else {
+      hydLine1.setAttribute('class', 'hydraulic-line');
+      hydLine2.setAttribute('class', 'hydraulic-line');
+    }
+
+    // Wires (sensor → R1)
+    const wireActive = state.sensorActive;
+    ['wireSensorR1a', 'wireSensorR1b', 'wireSensorR1c'].forEach(id => {
+      document.getElementById(id).setAttribute('class', wireActive ? 'wire active' : 'wire');
+    });
+
+    // SVG PB buttons visual feedback
+    const pb1face = document.getElementById('svgPB1face');
+    const pb1inner = document.getElementById('svgPB1inner');
+    const pb2face = document.getElementById('svgPB2face');
+    const pb2inner = document.getElementById('svgPB2inner');
+    if (pb1face) {
+      pb1face.setAttribute('fill', state.pb1Pressed ? '#1a6a38' : '#2d8a4e');
+      pb1inner.setAttribute('fill', state.pb1Pressed ? '#2ecc71' : '#3aa060');
+    }
+    if (pb2face) {
+      pb2face.setAttribute('fill', state.pb2Pressed ? '#1a6a38' : '#2d8a4e');
+      pb2inner.setAttribute('fill', state.pb2Pressed ? '#2ecc71' : '#3aa060');
+    }
+
+    // 24V supply indicator
+    const supply = document.getElementById('supply24v');
+    supply.setAttribute('fill', state.sensorActive ? '#3a1515' : '#2c1010');
+  }
+
+  // ===== LADDER DIAGRAM UPDATE =====
+  function updateLadder() {
+    // Rung 1: Sensor → R1
+    const sensorClosed = state.sensorActive;
+    setLadderWire('lw1a', sensorClosed);
+    setLadderContact('lc_sensor_bridge', sensorClosed);
+    setLadderWire('lw1b', sensorClosed);
+    setLadderCoil('lcoil_r1', state.r1Energized);
+    setLadderWire('lw1c', sensorClosed);
+
+    // Rung 2: R1 + PB1 + PB2 + 2Hand → SV1
+    const r2_r1 = state.r1Energized;
+    const r2_pb1 = r2_r1 && state.pb1Pressed;
+    const r2_pb2 = r2_pb1 && state.pb2Pressed;
+    const r2_2hand = r2_pb2; // simplified: both pressed = valid
+    const r2_out = r2_2hand;
+
+    setLadderWire('lw2a', r2_r1);
+    setLadderContact('lc_r1_bridge', state.r1Energized);
+    setLadderWire('lw2c', r2_pb1);
+    setLadderContact('lc_pb1_bridge', state.pb1Pressed);
+    setLadderWire('lw2d', r2_pb2);
+    setLadderContact('lc_pb2_bridge', state.pb2Pressed);
+    setLadderWire('lw2e', r2_2hand);
+
+    const box2h = document.getElementById('lc_2hand_box');
+    box2h.setAttribute('stroke', r2_2hand ? '#2ecc71' : '#888');
+    box2h.setAttribute('fill', r2_2hand ? 'rgba(46,204,113,0.1)' : 'none');
+
+    setLadderWire('lw2f', r2_out);
+    setLadderCoil('lcoil_sv1', state.sv1Energized);
+    setLadderWire('lw2g', r2_out);
+
+    // Rung 3: SV1 → Timer
+    setLadderWire('lw3a', state.sv1Energized);
+    setLadderContact('lc_sv1_bridge', state.sv1Energized);
+    setLadderWire('lw3b', state.sv1Energized);
+    const tmrBox = document.getElementById('lcoil_timer_box');
+    tmrBox.setAttribute('stroke', state.timerRunning ? '#f39c12' : '#888');
+    tmrBox.setAttribute('fill', state.timerRunning ? 'rgba(243,156,18,0.1)' : 'none');
+    setLadderWire('lw3c', state.sv1Energized);
+
+    // Rung 4: Timer → Contactor → Motor
+    setLadderWire('lw4a', state.pumpContactorOn);
+    setLadderContact('lc_tmr_bridge', state.timerRunning);
+    setLadderWire('lw4b', state.pumpContactorOn);
+    const mpBox = document.getElementById('lc_mp_box');
+    mpBox.setAttribute('stroke', state.pumpContactorOn ? '#2ecc71' : '#888');
+    setLadderWire('lw4c', state.pumpContactorOn);
+    setLadderCoil('lcoil_contactor', state.pumpContactorOn);
+    setLadderWire('lw4d', state.pumpRunning);
+    const motor = document.getElementById('lmotor');
+    motor.setAttribute('stroke', state.pumpRunning ? '#2ecc71' : '#888');
+    setLadderWire('lw4e', state.pumpRunning);
+  }
+
+  function setLadderWire(id, active) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.setAttribute('class', active ? 'ladder-wire active' : 'ladder-wire');
+    }
+  }
+
+  function setLadderContact(id, closed) {
+    const el = document.getElementById(id);
+    if (el) {
+      if (closed) {
+        el.setAttribute('stroke-dasharray', 'none');
+        el.setAttribute('class', 'ladder-wire active');
+        el.setAttribute('stroke-width', '2.5');
+      } else {
+        el.setAttribute('stroke-dasharray', '4 3');
+        el.setAttribute('class', 'ladder-wire');
+        el.setAttribute('stroke-width', '2');
+      }
+    }
+  }
+
+  function setLadderCoil(id, energized) {
+    const el = document.getElementById(id);
+    if (el) {
+      el.setAttribute('class', energized ? 'ladder-coil energized' : 'ladder-coil');
+    }
+  }
+
+  // ===== MAIN LOOP =====
+  function mainLoop(timestamp) {
+    if (!lastTimestamp) lastTimestamp = timestamp;
+    const dt = Math.min((timestamp - lastTimestamp) / 1000, 0.1); // cap dt
+    lastTimestamp = timestamp;
+
+    controlLogicScan(dt);
+    updateUI();
+
+    requestAnimationFrame(mainLoop);
+  }
+
+  // ===== RESET =====
+  function reset() {
+    state.doorClosed = true;
+    state.cylinderClosed = false;
+    state.pb1Pressed = false;
+    state.pb2Pressed = false;
+    state.sensorActive = false;
+    state.r1Energized = false;
+    state.twoHandValid = false;
+    state.cycleActive = false;
+    state.sv1Energized = false;
+    state.timerRunning = false;
+    state.timerValue = CONFIG.TIMER_DURATION;
+    state.pumpContactorOn = false;
+    state.pumpRunning = false;
+    state.knifePosition = 0;
+    state.knifeMoving = false;
+    state.knifeDirection = 'none';
+    state.rollRadius = 33;
+    state.cyclePhase = 'idle';
+    pumpFanAngle = 0;
+    lastTimestamp = 0;
+
+    document.getElementById('eventLog').innerHTML = '';
+    log('=== SIMULATION RESET ===', 'warn');
+    updateUI();
+  }
+
+  // ===== INIT =====
+  function init() {
+    log('Simulation initialized', 'warn');
+    log('Close door, close cylinder, then press both buttons to start cycle', '');
+    requestAnimationFrame(mainLoop);
+  }
+
+  // ===== KEYBOARD SHORTCUT: Ctrl+Alt (simultaneous press required) =====
+  let ctrlAltHeld = false;
+  let ctrlPressTime = 0;
+  let altPressTime = 0;
+  const SIMULTANEOUS_WINDOW = 300; // ms - both keys must be pressed within this window
+
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Control') ctrlPressTime = Date.now();
+    if (e.key === 'Alt') altPressTime = Date.now();
+
+    if (e.ctrlKey && e.altKey && !ctrlAltHeld) {
+      const timeDiff = Math.abs(ctrlPressTime - altPressTime);
+      if (timeDiff <= SIMULTANEOUS_WINDOW) {
+        e.preventDefault();
+        ctrlAltHeld = true;
+        if (!state.cylinderClosed) {
+          toggleCylinder();
+        }
+        pressBoth();
+      }
+    }
+  });
+
+  document.addEventListener('keyup', (e) => {
+    if (ctrlAltHeld && (!e.ctrlKey || !e.altKey)) {
+      ctrlAltHeld = false;
+      releaseBoth();
+    }
+  });
+
+  // Start
+  init();
+
+  // ===== PUBLIC API =====
+  return {
+    toggleCylinder,
+    pressPB,
+    releasePB,
+    pressBoth,
+    releaseBoth,
+    reset,
+    getState: () => ({ ...state }),
+    getConfig: () => ({ ...CONFIG }),
+  };
+
+})();
+</script>
+
+<!-- ===== SAFETY PRESENTATION OVERLAY ===== -->
+<div class="safety-overlay" id="safetyOverlay">
+  <div class="safety-slide" id="safetySlide">
+    <div class="safety-slide-header">
+      <h2 id="safetyTitle">מצגת בטיחות</h2>
+      <span class="safety-slide-counter" id="safetyCounter">1 / 8</span>
+    </div>
+    <div class="safety-slide-body">
+      <div class="safety-slide-visual" id="safetyVisual"></div>
+      <div class="safety-slide-info" id="safetyInfo"></div>
+    </div>
+    <div class="safety-slide-footer">
+      <button class="safety-nav-btn" id="safetyPrev" onclick="SAFETY.prev()">&#8594; הקודם</button>
+      <div class="safety-progress" id="safetyDots"></div>
+      <button class="safety-nav-btn primary" id="safetyNext" onclick="SAFETY.next()"> הבא &#8592;</button>
+      <button class="safety-close-btn" id="safetyCloseBtn" onclick="SAFETY.close()">סגור</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SAFETY = (() => {
+  let currentSlide = 0;
+  const scenarios = [
+    {
+      title: 'תקיעת סכין באמצע החתיכה',
+      danger: 'critical',
+      dangerText: 'סכנה קריטית',
+      description: 'הסכין נתקעת במהלך הירידה על הגליל ולא חוזרת למעלה. המפעיל עלול לנסות לשחרר את התקיעה באופן ידני ולהכניס את ידו לאזור הסכין.',
+      prevention: ['לעולם לא להכניס ידיים לאזור הסכין', 'לחצות על E-STOP מידית', 'להמתין לטכנאי לטפל', 'לוודא שהמגן הבטיחות סגור'],
+      svg: `<svg viewBox="0 0 300 250" width="100%" height="100%">
+        <rect x="60" y="10" width="20" height="200" rx="3" fill="#5a5c60" stroke="#7a7c80"/>
+        <rect x="220" y="10" width="20" height="200" rx="3" fill="#5a5c60" stroke="#7a7c80"/>
+        <rect x="60" y="10" width="180" height="20" fill="#5a5c60" stroke="#7a7c80"/>
+        <g style="animation: shakeKnife 0.3s ease infinite;">
+          <rect x="80" y="110" width="140" height="15" rx="2" fill="#505255"/>
+          <polygon points="80,125 220,125 220,135 90,145" fill="#e8c820" stroke="#b89c10"/>
+          <line x1="220" y1="135" x2="90" y2="145" stroke="#e74c3c" stroke-width="2"/>
+        </g>
+        <ellipse cx="150" cy="160" rx="30" ry="30" fill="#e8e2d4" stroke="#ccc6b6" stroke-width="2"/>
+        <ellipse cx="150" cy="160" rx="8" ry="8" fill="#a08060"/>
+        <text x="150" y="220" text-anchor="middle" fill="#e74c3c" font-size="14" font-weight="700" style="animation: pulseRed 1s ease infinite;">⚠ סכין תקוע!</text>
+        <rect x="75" y="105" width="150" height="50" fill="none" stroke="#e74c3c" stroke-width="2" stroke-dasharray="6 3" rx="4" style="animation: pulseRed 1s ease infinite;"/>
+      </svg>`
+    },
+    {
+      title: 'איבוד מיקום סכין (Position Lost)',
+      danger: 'critical',
+      dangerText: 'סכנה קריטית',
+      description: 'המערכת לא יודעת איפה הסכין נמצאת - חיישן המיקום נכשל. הסכין עלולה להיות בכל מקום במסלול, והפעלה של המכונה יכולה לגרום לתאונה או פגיעה במפעיל.',
+      prevention: ['התקנת חיישן מיקום עליון ותחתון (Limit Switches)', 'נוהל Homing בכל הפעלה', 'חיווי זיהוי מיקום סכין תמיד', 'ניתוק פעולה אם חיישן מדווח - דרישה מיידית'],
+      svg: `<svg viewBox="0 0 300 250" width="100%" height="100%">
+        <rect x="60" y="10" width="20" height="200" rx="3" fill="#5a5c60"/>
+        <rect x="220" y="10" width="20" height="200" rx="3" fill="#5a5c60"/>
+        <rect x="60" y="10" width="180" height="20" fill="#5a5c60"/>
+        <g transform="translate(0, 45)">
+          <rect x="80" y="70" width="140" height="12" fill="#505255" opacity="0.3"/>
+          <polygon points="80,82 220,82 220,90 90,100" fill="#e8c820" opacity="0.3"/>
+        </g>
+        <text x="150" y="75" text-anchor="middle" fill="#f39c12" font-size="32" font-weight="700">?</text>
+        <text x="150" y="95" text-anchor="middle" fill="#f39c12" font-size="11" style="animation: flashWarn 1.5s ease infinite;">מיקום לא ידוע</text>
+        <g transform="translate(0, 100)">
+          <rect x="80" y="70" width="140" height="12" fill="#505255" opacity="0.3"/>
+          <polygon points="80,82 220,82 220,90 90,100" fill="#e8c820" opacity="0.3"/>
+        </g>
+        <line x1="70" y1="30" x2="230" y2="210" stroke="#e74c3c" stroke-width="3" stroke-dasharray="8 4" style="animation: pulseRed 1s ease infinite;"/>
+        <line x1="230" y1="30" x2="70" y2="210" stroke="#e74c3c" stroke-width="3" stroke-dasharray="8 4" style="animation: pulseRed 1s ease infinite;"/>
+        <text x="150" y="240" text-anchor="middle" fill="#e74c3c" font-size="12" font-weight="700">חיישן מיקום נכשל!</text>
+      </svg>`
+    },
+    {
+      title: 'תקלה הידראולית - דליפת שמן',
+      danger: 'critical',
+      dangerText: 'סכנה קריטית',
+      description: 'צינור הידראולי נשבר או דולף - שמן הידראולי בלחץ גבוה. הסכין עלולה ליפול בצורה לא מבוקרת, מפלס רצפה חלק לגרום לסכנת החלקה וכוויות.',
+      prevention: ['בדיקת צינורות וחיבורים יומית', 'חיישן לחץ שמן במעגל הידראולי', 'מגש הגנה תחת המכונה', 'החלפת צינורות לפי לוח זמנים'],
+      svg: `<svg viewBox="0 0 300 250" width="100%" height="100%">
+        <rect x="60" y="10" width="20" height="200" rx="3" fill="#5a5c60"/>
+        <rect x="220" y="10" width="20" height="200" rx="3" fill="#5a5c60"/>
+        <rect x="60" y="10" width="180" height="20" fill="#5a5c60"/>
+        <!-- Hydraulic lines -->
+        <line x1="50" y1="25" x2="50" y2="130" stroke="#1a5276" stroke-width="4"/>
+        <line x1="250" y1="25" x2="250" y2="130" stroke="#1a5276" stroke-width="4"/>
+        <!-- Leak point -->
+        <circle cx="50" cy="100" r="5" fill="#e74c3c" style="animation: pulseRed 0.8s ease infinite;"/>
+        <!-- Dripping oil -->
+        <circle cx="48" cy="115" r="3" fill="#c0392b" style="animation: leakDrip 1.5s ease infinite;"/>
+        <circle cx="52" cy="120" r="2" fill="#c0392b" style="animation: leakDrip 1.5s ease 0.3s infinite;"/>
+        <circle cx="46" cy="125" r="3" fill="#c0392b" style="animation: leakDrip 1.5s ease 0.6s infinite;"/>
+        <!-- Oil puddle -->
+        <ellipse cx="50" cy="195" rx="25" ry="8" fill="#7a2020" opacity="0.6"/>
+        <!-- Warning -->
+        <text x="150" y="230" text-anchor="middle" fill="#c0392b" font-size="13" font-weight="700" style="animation: pulseRed 1s ease infinite;">⚠ דליפת שמן הידראולי!</text>
+        <rect x="30" y="85" width="45" height="35" fill="none" stroke="#e74c3c" stroke-width="2" rx="3" stroke-dasharray="4 2" style="animation: pulseRed 0.8s ease infinite;"/>
+      </svg>`
+    },
+    {
+      title: 'כשל חיישן קירבה (Sensor Failure)',
+      danger: 'high',
+      dangerText: 'סכנה גבוהה',
+      description: 'החיישן האינדוקטיבי מפסיק לעבוד או נותן קריאה שגויה. המערכת לא מזהה את הגליל ועלולה לאפשר חתיכה בלי שהגליל מוכן, או לחסום את המערכת לגמרי.',
+      prevention: ['בדיקת חיישנים תקופתית', 'חיווי חיישן כפול - איתות תקלה', 'שימוש בחיישן כפול כעקרון בטיחות', 'התראה על מסך לטכנאי'],
+      svg: `<svg viewBox="0 0 300 250" width="100%" height="100%">
+        <rect x="170" y="80" width="40" height="40" rx="6" fill="#335" stroke="#557" stroke-width="2"/>
+        <circle cx="190" cy="100" r="10" fill="none" stroke="#44aaff" stroke-width="2" opacity="0.3"/>
+        <line x1="170" y1="80" x2="210" y2="120" stroke="#e74c3c" stroke-width="3"/>
+        <line x1="210" y1="80" x2="170" y2="120" stroke="#e74c3c" stroke-width="3"/>
+        <text x="190" y="145" text-anchor="middle" fill="#e74c3c" font-size="11" font-weight="700">חיישן לא תקין</text>
+        <!-- Relay stays energized incorrectly -->
+        <rect x="90" y="160" width="50" height="30" rx="4" fill="#3a3a4a" stroke="#5a5a6a"/>
+        <text x="115" y="180" text-anchor="middle" fill="#f39c12" font-size="12" font-weight="700">R1</text>
+        <circle cx="135" cy="167" r="6" fill="#e74c3c" style="animation: pulseRed 0.5s ease infinite;"/>
+        <text x="150" y="210" text-anchor="middle" fill="#f39c12" font-size="10" style="animation: flashWarn 1s ease infinite;">רלה תקוע במצב ON</text>
+        <path d="M190,120 L190,145 L115,145 L115,160" stroke="#e74c3c" stroke-width="2" fill="none" stroke-dasharray="5 3"/>
+      </svg>`
+    },
+    {
+      title: 'כשל בקרת שני ידיים (Two-Hand Bypass)',
+      danger: 'critical',
+      dangerText: 'סכנה קריטית',
+      description: 'מפעיל מנסה לעקוף את בקרת שני ידיים על ידי קשירת כפתור אחד במצב לחוץ, ולחיצה על START ביד אחת. היד השנייה נמצאת באזור הסכין.',
+      prevention: ['בקרת שני ידיים לפי תקן EN 574 עם טיימר', 'הרחקה מספקת בין הכפתורים', 'מצלמה לפני כל מחזור', 'ביקורת תקופתיות של מערכת הבטיחות'],
+      svg: `<svg viewBox="0 0 300 250" width="100%" height="100%">
+        <!-- Two buttons -->
+        <circle cx="100" cy="80" r="20" fill="#2d8a4e" stroke="#1a6a38" stroke-width="3"/>
+        <text x="100" y="85" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">PB1</text>
+        <circle cx="200" cy="80" r="20" fill="#2d8a4e" stroke="#1a6a38" stroke-width="3"/>
+        <text x="200" y="85" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">PB2</text>
+        <!-- Tape on PB1 -->
+        <rect x="78" y="65" width="44" height="30" rx="2" fill="#888" opacity="0.5" transform="rotate(-10, 100, 80)"/>
+        <text x="100" y="83" text-anchor="middle" fill="#333" font-size="8" font-weight="700" transform="rotate(-10, 100, 80)">קשור</text>
+        <!-- Hand on PB2 only -->
+        <text x="200" y="50" text-anchor="middle" font-size="30">✋</text>
+        <!-- Danger zone -->
+        <rect x="80" y="130" width="140" height="15" fill="#505255"/>
+        <polygon points="80,145 220,145 220,153 90,163" fill="#e8c820"/>
+        <line x1="220" y1="153" x2="90" y2="163" stroke="#e74c3c" stroke-width="2"/>
+        <text x="150" y="195" text-anchor="middle" fill="#e74c3c" font-size="11" font-weight="700" style="animation: pulseRed 1s ease infinite;">סכנה! יד באזור החתיכה</text>
+        <!-- Arrow from hand to danger -->
+        <path d="M220,100 C240,110 240,125 220,135" stroke="#e74c3c" stroke-width="2" fill="none" marker-end="url(#arrowRed)"/>
+        <defs><marker id="arrowRed" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto"><path d="M0,0 L6,2 L0,4" fill="#e74c3c"/></marker></defs>
+      </svg>`
+    },
+    {
+      title: 'כשל משאבת הידראולית (Pump Failure)',
+      danger: 'high',
+      dangerText: 'סכנה גבוהה',
+      description: 'משאבת ההידראוליקה מפסיקה לעבוד באמצע המחזור. הסכין נתקעת באמצע ולא יכולה לחזור למעלה או לרדת. סכנה להתחלה לא מתוכננת בניסיון הבא.',
+      prevention: ['תחזוקה שוטפת של משאבה ומנוע', 'טיימר 15 שניות לניתוק אוטומטי', 'הגנה תרמית למנוע 16A', 'שסתום לחץ שמן לזיהוי חימום יתר'],
+      svg: `<svg viewBox="0 0 300 250" width="100%" height="100%">
+        <!-- Motor -->
+        <circle cx="150" cy="100" r="40" fill="#4a4a5a" stroke="#6a6a7a" stroke-width="3"/>
+        <text x="150" y="108" text-anchor="middle" fill="#aaa" font-size="24" font-weight="700">M</text>
+        <!-- X mark on motor -->
+        <line x1="120" y1="70" x2="180" y2="130" stroke="#e74c3c" stroke-width="4"/>
+        <line x1="180" y1="70" x2="120" y2="130" stroke="#e74c3c" stroke-width="4"/>
+        <!-- Sparks -->
+        <text x="195" y="70" fill="#f1c40f" font-size="16" style="animation: sparkFlash 2s ease infinite;">\u26a1</text>
+        <text x="100" y="70" fill="#f1c40f" font-size="14" style="animation: sparkFlash 2s ease 0.5s infinite;">\u26a1</text>
+        <!-- Temperature warning -->
+        <text x="150" y="160" text-anchor="middle" fill="#e67e22" font-size="11" font-weight="700">עומס יתר על ממוסץ!</text>
+        <rect x="100" y="175" width="100" height="12" rx="3" fill="#333" stroke="#555"/>
+        <rect x="100" y="175" width="85" height="12" rx="3" fill="linear" style="background:linear-gradient(90deg,#2ecc71,#f1c40f,#e74c3c)">
+        </rect>
+        <rect x="100" y="175" width="85" height="12" rx="3" fill="#e74c3c" opacity="0.8"/>
+        <text x="150" y="205" text-anchor="middle" fill="#e74c3c" font-size="12" font-weight="700" style="animation: pulseRed 1s ease infinite;">כשל משאבה!</text>
+      </svg>`
+    },
+    {
+      title: 'סכין יורדת במהירות לא מתוכננת',
+      danger: 'high',
+      dangerText: 'סכנה גבוהה',
+      description: 'שסתום הבקרה מאפשר לסכין לרדת מהר מדי בגלל כוח הכבידה של המכונה. זה גורם לעומס מוגבר על המכונה, פגיעה במסגרת וקיצור חיי הסכין.',
+      prevention: ['התקנת שסתום מפחית מהירות (Flow Control Valve)', 'נוהל בידוק מהירות הסכין תקופתית', 'חיישני מהירות מורשים', 'מגבלות מכניות לספיגת אנרגיה'],
+      svg: `<svg viewBox="0 0 300 250" width="100%" height="100%">
+        <rect x="60" y="10" width="20" height="200" rx="3" fill="#5a5c60"/>
+        <rect x="220" y="10" width="20" height="200" rx="3" fill="#5a5c60"/>
+        <rect x="60" y="10" width="180" height="20" fill="#5a5c60"/>
+        <!-- Fast-moving knife -->
+        <g>
+          <rect x="80" y="50" width="140" height="12" fill="#505255"/>
+          <polygon points="80,62 220,62 220,70 90,80" fill="#e8c820"/>
+          <line x1="220" y1="70" x2="90" y2="80" stroke="#e74c3c" stroke-width="2"/>
+        </g>
+        <!-- Speed arrows -->
+        <text x="40" y="60" fill="#e74c3c" font-size="20" style="animation: pulseRed 0.3s ease infinite;">▼</text>
+        <text x="255" y="60" fill="#e74c3c" font-size="20" style="animation: pulseRed 0.3s ease infinite;">▼</text>
+        <text x="40" y="80" fill="#e74c3c" font-size="20" style="animation: pulseRed 0.3s 0.15s ease infinite;">▼</text>
+        <text x="255" y="80" fill="#e74c3c" font-size="20" style="animation: pulseRed 0.3s 0.15s ease infinite;">▼</text>
+        <!-- Roll -->
+        <ellipse cx="150" cy="160" rx="30" ry="30" fill="#e8e2d4" stroke="#ccc6b6" stroke-width="2"/>
+        <ellipse cx="150" cy="160" rx="8" ry="8" fill="#a08060"/>
+        <text x="150" y="225" text-anchor="middle" fill="#e67e22" font-size="12" font-weight="700" style="animation: flashWarn 0.5s ease infinite;">⚠ מהירות ירידה מוגברת!</text>
+      </svg>`
+    },
+    {
+      title: 'מגן בטיחות פתוח בזמן פעולה',
+      danger: 'critical',
+      dangerText: 'סכנה קריטית',
+      description: 'מגן הבטיחות השקוף (מפוליקרבונט) נפתח או מורם בזמן שהסכין בתנועה. המפעיל מכניס יד ונפגע על ידי הסכין.',
+      prevention: ['נעילת בטיחות אלקטרונית (Interlock) על הדלת', 'מגן עם נעילת בטיחות לפי תקן ISO 14119', 'קרנות אור מתוזמנות לאזור החתיכה', 'עצירת מכונה אוטומטית בפתיחת דלת'],
+      svg: `<svg viewBox="0 0 300 250" width="100%" height="100%">
+        <rect x="60" y="10" width="20" height="200" rx="3" fill="#5a5c60"/>
+        <rect x="220" y="10" width="20" height="200" rx="3" fill="#5a5c60"/>
+        <rect x="60" y="10" width="180" height="20" fill="#5a5c60"/>
+        <!-- Safety guard OPEN -->
+        <rect x="40" y="50" width="15" height="120" rx="2" fill="rgba(100,180,255,0.3)" stroke="rgba(150,200,255,0.6)" stroke-width="2" transform="rotate(-30, 47, 50)"/>
+        <text x="20" y="90" fill="#3498db" font-size="8" transform="rotate(-30, 20, 90)">מגן פתוח!</text>
+        <!-- Moving knife -->
+        <g>
+          <rect x="80" y="90" width="140" height="12" fill="#505255"/>
+          <polygon points="80,102 220,102 220,110 90,120" fill="#e8c820"/>
+          <line x1="220" y1="110" x2="90" y2="120" stroke="#e74c3c" stroke-width="2"/>
+        </g>
+        <!-- Hand reaching in -->
+        <text x="245" y="120" font-size="30">✋</text>
+        <path d="M245,120 L220,115" stroke="#e74c3c" stroke-width="2" stroke-dasharray="4 2" style="animation: pulseRed 0.5s ease infinite;"/>
+        <text x="150" y="230" text-anchor="middle" fill="#e74c3c" font-size="12" font-weight="700" style="animation: pulseRed 1s ease infinite;">⚠ מגן פתוח - גישה לסכין!</text>
+      </svg>`
+    },
+    {
+      title: 'כשל חשמלי - ניתוק פתאומי',
+      danger: 'medium',
+      dangerText: 'סכנה בינונית',
+      description: 'הפסקת חשמל פתאומית גורמת לכל מערכות הבקרה לאבד את המצב הבטוח. הסכין עלולה ליפול בגלל משקלה ולפגוע במפעיל, SV1 לא נסגר או נפתח לא במקום.',
+      prevention: ['אל פסק (UPS) למערכת הבקרה', 'שסתום SV1 = Normally Closed (סכין חוזרת למעלה בהפסקה)', 'שסתום קפיץ מכני להחזרת הסכין', 'מוניטורינג מתח והתראות'],
+      svg: `<svg viewBox="0 0 300 250" width="100%" height="100%">
+        <!-- Power symbol -->
+        <circle cx="150" cy="70" r="35" fill="none" stroke="#555" stroke-width="4"/>
+        <line x1="150" y1="35" x2="150" y2="70" stroke="#555" stroke-width="5"/>
+        <!-- X over power -->
+        <line x1="120" y1="40" x2="180" y2="100" stroke="#e74c3c" stroke-width="3"/>
+        <line x1="180" y1="40" x2="120" y2="100" stroke="#e74c3c" stroke-width="3"/>
+        <text x="150" y="125" text-anchor="middle" fill="#e74c3c" font-size="12" font-weight="700">הפסקת חשמל!</text>
+        <!-- SV1 stuck -->
+        <rect x="80" y="150" width="60" height="30" rx="4" fill="#3a3a4a" stroke="#5a5a6a" stroke-width="2"/>
+        <text x="110" y="170" text-anchor="middle" fill="#f39c12" font-size="12" font-weight="700">SV1</text>
+        <text x="110" y="195" text-anchor="middle" fill="#f39c12" font-size="9" style="animation: flashWarn 1.5s ease infinite;">תקוע במצב אחרון</text>
+        <!-- Knife stuck mid-way -->
+        <rect x="170" y="140" width="50" height="10" fill="#505255"/>
+        <polygon points="170,150 220,150 220,156 175,162" fill="#e8c820" opacity="0.6"/>
+        <text x="195" y="180" text-anchor="middle" fill="#e67e22" font-size="9">סכין תקועה באמצע</text>
+        <text x="150" y="230" text-anchor="middle" fill="#f39c12" font-size="11" font-weight="700" style="animation: flashWarn 1.5s ease infinite;">⚡ ניתוק חשמל פתאומי</text>
+      </svg>`
+    }
+  ];
+
+  function render(index) {
+    const s = scenarios[index];
+    document.getElementById('safetyTitle').textContent = s.title;
+    document.getElementById('safetyCounter').textContent = `${index + 1} / ${scenarios.length}`;
+    document.getElementById('safetyVisual').innerHTML = s.svg;
+    
+    let infoHTML = `
+      <span class="danger-level danger-${s.danger}">${s.dangerText}</span>
+      <h3>${s.title}</h3>
+      <div class="scenario-desc">${s.description}</div>
+      <div class="prevention">
+        <h4>אמצעי מניעה והגנה:</h4>
+        <ul>${s.prevention.map(p => `<li>${p}</li>`).join('')}</ul>
+      </div>
+    `;
+    document.getElementById('safetyInfo').innerHTML = infoHTML;
+
+    // Update dots
+    const dotsEl = document.getElementById('safetyDots');
+    dotsEl.innerHTML = scenarios.map((_, i) => 
+      `<div class="safety-dot ${i === index ? 'active' : (i < index ? 'viewed' : '')}"></div>`
+    ).join('');
+
+    // Navigation buttons
+    document.getElementById('safetyPrev').style.visibility = index === 0 ? 'hidden' : 'visible';
+    const nextBtn = document.getElementById('safetyNext');
+    if (index === scenarios.length - 1) {
+      nextBtn.textContent = '\u2714 \u05e1\u05d9\u05d5\u05dd';
+      nextBtn.onclick = () => SAFETY.close();
+    } else {
+      nextBtn.innerHTML = '\u05d4\u05d1\u05d0 &#8592;';
+      nextBtn.onclick = () => SAFETY.next();
+    }
+  }
+
+  function open() {
+    currentSlide = 0;
+    render(currentSlide);
+    document.getElementById('safetyOverlay').classList.add('visible');
+  }
+
+  function close() {
+    document.getElementById('safetyOverlay').classList.remove('visible');
+  }
+
+  function next() {
+    if (currentSlide < scenarios.length - 1) {
+      currentSlide++;
+      render(currentSlide);
+    }
+  }
+
+  function prev() {
+    if (currentSlide > 0) {
+      currentSlide--;
+      render(currentSlide);
+    }
+  }
+
+  // Close on Escape
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') close();
+    if (e.key === 'ArrowLeft' && document.getElementById('safetyOverlay').classList.contains('visible')) next();
+    if (e.key === 'ArrowRight' && document.getElementById('safetyOverlay').classList.contains('visible')) prev();
+  });
+
+  return { open, close, next, prev };
+})();
+</script>
+
+</body>
+</html>
