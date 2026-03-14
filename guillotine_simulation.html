@@ -705,16 +705,6 @@
     <div class="panel-header">Interactive Controls</div>
     <div class="panel-body">
 
-<!-- Safety Curtain -->
-    <div class="control-group">
-      <div class="control-group-title">וילון בטיחות / Safety Curtain</div>
-      <button class="btn" id="btnDoor" onclick="SIM.toggleDoor()" style="border-color:#c0392b;">
-        <span class="btn-indicator"></span>
-        <span class="btn-text">וילון בטיחות: פתוח</span>
-      </button>
-      <div style="text-align:center; font-size:10px; color:#e74c3c; margin-top:2px;">⚠ יש לסגור את הוילון לפני הפעלה</div>
-    </div>
-
     <!-- Cylinder -->
       <div class="control-group">
         <div class="control-group-title">Paper Cylinder / Roller</div>
@@ -749,12 +739,11 @@
       <!-- Instructions -->
       <div class="instructions" style="direction:rtl; text-align:right;">
         <strong>הוראות הפעלה:</strong><br>
-        1. סגור את וילון הבטיחות (Safety Curtain)<br>
-        2. לחץ על כפתור הגליל להכנסתו למצב CLOSED<br>
-        3. לחץ והחזק את שני הכפתורים PB1+PB2 בו זמנית<br>
-        4. צפה במחזור החיתוך מתבצע<br>
+        1. לחץ על כפתור הגליל להכנסתו למצב CLOSED<br>
+        2. לחץ והחזק את שני הכפתורים PB1+PB2 בו זמנית<br>
+        3. צפה במחזור החיתוך מתבצע<br>
         <br>
-        <strong>שים לב:</strong> פתיחת הוילון או שחרור כפתור במהלך המחזור יעצור מיידית את המערכת.
+        <strong>שים לב:</strong> שחרור כפתור במהלך המחזור יעצור מיידית את המערכת.
       </div>
 
       <!-- Event Log -->
@@ -856,26 +845,7 @@
             <path d="M135,40 Q120,50 105,48 Q90,46 85,35" fill="none" stroke="#333" stroke-width="1.5" stroke-linecap="round"/>
           </g>
 
-          <!-- Safety curtain on roller -->
-          <g id="safetyGuardGroup">
-            <!-- Curtain roller at top -->
-            <rect x="175" y="76" width="210" height="8" rx="4" fill="#6a6c70" stroke="#8a8c90" stroke-width="1" id="curtainRoller"/>
-            <circle cx="180" cy="80" r="5" fill="#555" stroke="#777" stroke-width="1"/>
-            <circle cx="380" cy="80" r="5" fill="#555" stroke="#777" stroke-width="1"/>
-            <!-- Plastic curtain (translucent strips) -->
-            <rect x="175" y="84" width="210" height="181" rx="1" id="guardPanel"
-                  fill="rgba(255,220,100,0.08)" stroke="rgba(255,200,50,0.2)" stroke-width="1"/>
-            <!-- Curtain vertical strip lines -->
-            <line x1="210" y1="84" x2="210" y2="265" stroke="rgba(255,200,50,0.1)" stroke-width="0.5"/>
-            <line x1="245" y1="84" x2="245" y2="265" stroke="rgba(255,200,50,0.1)" stroke-width="0.5"/>
-            <line x1="280" y1="84" x2="280" y2="265" stroke="rgba(255,200,50,0.1)" stroke-width="0.5"/>
-            <line x1="315" y1="84" x2="315" y2="265" stroke="rgba(255,200,50,0.1)" stroke-width="0.5"/>
-            <line x1="350" y1="84" x2="350" y2="265" stroke="rgba(255,200,50,0.1)" stroke-width="0.5"/>
-            <text x="280" y="95" text-anchor="middle" font-size="7" id="guardLabel" fill="rgba(255,200,50,0.3)">וילון בטיחות</text>
-            <!-- Status indicator -->
-            <circle cx="190" cy="73" r="4" id="guardLed" fill="#e74c3c"/>
-            <text x="200" y="76" font-size="6" fill="#e74c3c" id="guardStatusText">OPEN</text>
-          </g>
+
 
           <!-- Table / cutting surface -->
           <rect x="175" y="268" width="210" height="10" rx="2" class="machine-table"/>
@@ -1206,11 +1176,6 @@
 
       <div class="control-group">
         <div class="control-group-title">Safety Inputs</div>
-        <div class="status-item off" id="stDoor">
-          <div class="status-led"></div>
-          <div class="status-label">וילון בטיחות / Curtain</div>
-          <div class="status-value">OPEN</div>
-        </div>
         <div class="status-item off" id="stSensor">
           <div class="status-led"></div>
           <div class="status-label">Inductive Sensor</div>
@@ -1309,7 +1274,6 @@ const SIM = (() => {
   // ===== STATE =====
   const state = {
     // Inputs
-    doorClosed: false,
     cylinderClosed: false,
     pb1Pressed: false,
     pb2Pressed: false,
@@ -1359,16 +1323,6 @@ const SIM = (() => {
   }
 
   // ===== INPUT HANDLERS =====
-  function toggleDoor() {
-    if (state.cycleActive) {
-      log(`Cannot open curtain during active cycle!`, 'off');
-      return;
-    }
-    state.doorClosed = !state.doorClosed;
-    log(`וילון בטיחות ${state.doorClosed ? 'CLOSED ✓' : 'OPENED ✗'}`, state.doorClosed ? 'on' : 'off');
-    updateUI();
-  }
-
   function toggleCylinder() {
     state.cylinderClosed = !state.cylinderClosed;
     log(`Cylinder ${state.cylinderClosed ? 'CLOSED' : 'OPENED'}`, state.cylinderClosed ? 'on' : 'off');
@@ -1417,10 +1371,10 @@ const SIM = (() => {
 
     // --- Sensor logic ---
     // Inductive sensor detects cylinder in closed position
-    state.sensorActive = state.cylinderClosed && state.doorClosed;
+    state.sensorActive = state.cylinderClosed;
 
     // --- R1 logic ---
-    // R1 energized when sensor outputs 24V (only if guard closed)
+    // R1 energized when sensor outputs 24V
     state.r1Energized = state.sensorActive;
 
     // --- Two-hand control validation ---
@@ -1428,8 +1382,7 @@ const SIM = (() => {
     state.twoHandValid = state.pb1Pressed && state.pb2Pressed;
 
     // --- Cycle start conditions ---
-    const allConditionsMet = state.doorClosed &&
-                             state.sensorActive &&
+    const allConditionsMet = state.sensorActive &&
                              state.r1Energized &&
                              state.twoHandValid;
 
@@ -1458,18 +1411,6 @@ const SIM = (() => {
     }
 
     if (state.cyclePhase === 'cutting' || state.cyclePhase === 'returning') {
-      // Safety interlock: if guard opened during cycle - immediate stop
-      if (!state.doorClosed) {
-        if (state.sv1Energized) {
-          state.sv1Energized = false;
-          log('!!! CURTAIN OPENED - EMERGENCY STOP !!!', 'off');
-          log('Spring-loaded coil returning knife UP', 'warn');
-        }
-        state.knifeDirection = 'up';
-        state.knifeMoving = true;
-        state.cyclePhase = 'returning';
-      }
-
       // Safety interlock: if sensor lost (cylinder not in place), SV1 de-energizes
       // Spring-loaded coil returns knife UP automatically
       if (!state.r1Energized) {
@@ -1580,18 +1521,11 @@ const SIM = (() => {
   // ===== UI UPDATE =====
   function updateUI() {
     // --- Control buttons ---
-    // --- Door/Guard button ---
-    const btnDoor = document.getElementById('btnDoor');
-    btnDoor.classList.toggle('active', state.doorClosed);
-    btnDoor.style.borderColor = state.doorClosed ? '#2ecc71' : '#c0392b';
-    btnDoor.querySelector('.btn-text').textContent = state.doorClosed ? 'וילון בטיחות: סגור ✓' : 'וילון בטיחות: פתוח ✗';
-
     const btnCyl = document.getElementById('btnCylinder');
     btnCyl.classList.toggle('active', state.cylinderClosed);
     btnCyl.querySelector('.btn-text').textContent = `Cylinder: ${state.cylinderClosed ? 'CLOSED' : 'OPEN'}`;
 
     // --- Status indicators ---
-    setStatus('stDoor', state.doorClosed, state.doorClosed ? 'CLOSED ✓' : 'OPEN ✗');
     setStatus('stSensor', state.sensorActive, state.sensorActive ? 'ACTIVE' : 'OFF');
     setStatus('stR1', state.r1Energized, state.r1Energized ? 'ON' : 'OFF');
     setStatus('stPB1', state.pb1Pressed, state.pb1Pressed ? 'PRESSED' : 'OFF');
@@ -1638,35 +1572,6 @@ const SIM = (() => {
       cylBody.setAttribute('class', 'cylinder-body cylinder-closed');
     } else {
       cylBody.setAttribute('class', 'cylinder-body cylinder-open');
-    }
-
-    // Safety Curtain
-    const guardPanel = document.getElementById('guardPanel');
-    const guardLed = document.getElementById('guardLed');
-    const guardStatusText = document.getElementById('guardStatusText');
-    const guardLabel = document.getElementById('guardLabel');
-    if (state.doorClosed) {
-      guardPanel.setAttribute('fill', 'rgba(255,220,100,0.15)');
-      guardPanel.setAttribute('stroke', 'rgba(46,204,113,0.4)');
-      guardPanel.setAttribute('stroke-width', '1.5');
-      guardLed.setAttribute('fill', '#2ecc71');
-      guardStatusText.textContent = 'CLOSED';
-      guardStatusText.setAttribute('fill', '#2ecc71');
-      guardLabel.setAttribute('fill', 'rgba(46,204,113,0.5)');
-      guardLabel.textContent = 'וילון בטיחות - סגור';
-    } else {
-      guardPanel.setAttribute('fill', 'rgba(255,100,100,0.03)');
-      guardPanel.setAttribute('stroke', 'rgba(231,76,60,0.2)');
-      guardPanel.setAttribute('stroke-width', '1');
-      guardPanel.setAttribute('stroke-dasharray', '6 4');
-      guardLed.setAttribute('fill', '#e74c3c');
-      guardStatusText.textContent = 'OPEN';
-      guardStatusText.setAttribute('fill', '#e74c3c');
-      guardLabel.setAttribute('fill', 'rgba(231,76,60,0.4)');
-      guardLabel.textContent = 'וילון בטיחות - פתוח ⚠';
-    }
-    if (state.doorClosed) {
-      guardPanel.removeAttribute('stroke-dasharray');
     }
 
     // Sensor
@@ -1909,7 +1814,6 @@ const SIM = (() => {
 
   // ===== RESET =====
   function reset() {
-    state.doorClosed = false;
     state.cylinderClosed = false;
     state.pb1Pressed = false;
     state.pb2Pressed = false;
@@ -1938,7 +1842,7 @@ const SIM = (() => {
   // ===== INIT =====
   function init() {
     log('Simulation initialized', 'warn');
-    log('Close door, close cylinder, then press both buttons to start cycle', '');
+    log('Close cylinder, then press both buttons to start cycle', '');
     requestAnimationFrame(mainLoop);
   }
 
@@ -1957,9 +1861,6 @@ const SIM = (() => {
       if (timeDiff <= SIMULTANEOUS_WINDOW) {
         e.preventDefault();
         ctrlAltHeld = true;
-        if (!state.doorClosed) {
-          toggleDoor();
-        }
         if (!state.cylinderClosed) {
           toggleCylinder();
         }
@@ -1980,7 +1881,6 @@ const SIM = (() => {
 
   // ===== PUBLIC API =====
   return {
-    toggleDoor,
     toggleCylinder,
     pressPB,
     releasePB,
@@ -2022,8 +1922,8 @@ const SAFETY = (() => {
       title: 'תקיעת סכין באמצע החתיכה',
       danger: 'critical',
       dangerText: 'סכנה קריטית',
-      description: 'הסכין נתקעת במהלך הירידה על הגליל ולא חוזרת למעלה. המפעיל עלול לנסות לשחרר את התקיעה באופן ידני ולהכניס את ידו לאזור הסכין.',
-      prevention: ['לעולם לא להכניס ידיים לאזור הסכין', 'לחצות על E-STOP מידית', 'להמתין לטכנאי לטפל', 'לוודא שהמגן הבטיחות סגור'],
+      description: 'הסכין נתקעת במהלך הירידה על הגליל ולא חוזרת למעלה. לחץ הידראולי לא מספיק, או שהגליל קשה מדי. המפעיל עלול לנסות לשחרר את התקיעה באופן ידני ולהכניס את ידו לאזור הסכין.',
+      prevention: ['לעולם לא להכניס ידיים לאזור הסכין', 'לכבות מיידית את המכונה', 'להמתין לטכנאי מוסמך', 'לבדוק לחץ שמן הידראולי לפני כל משמרת', 'טיימר 15 שניות מנתק אוטומטית את המשאבה'],
       svg: `<svg viewBox="0 0 300 250" width="100%" height="100%">
         <rect x="60" y="10" width="20" height="200" rx="3" fill="#5a5c60" stroke="#7a7c80"/>
         <rect x="220" y="10" width="20" height="200" rx="3" fill="#5a5c60" stroke="#7a7c80"/>
@@ -2043,12 +1943,19 @@ const SAFETY = (() => {
       title: 'איבוד מיקום סכין (Position Lost)',
       danger: 'critical',
       dangerText: 'סכנה קריטית',
-      description: 'המערכת לא יודעת איפה הסכין נמצאת - חיישן המיקום נכשל. הסכין עלולה להיות בכל מקום במסלול, והפעלה של המכונה יכולה לגרום לתאונה או פגיעה במפעיל.',
-      prevention: ['התקנת חיישן מיקום עליון ותחתון (Limit Switches)', 'נוהל Homing בכל הפעלה', 'חיווי זיהוי מיקום סכין תמיד', 'ניתוק פעולה אם חיישן מדווח - דרישה מיידית'],
+      description: 'המערכת לא יודעת איפה הסכין נמצאת. ללא מפסקי גבול (Limit Switches), אין דרך לדעת אם הסכין למעלה, למטה, או באמצע. הפעלת המכונה במצב זה עלולה לגרום לתנועה לא צפויה של הסכין ופגיעה במפעיל.',
+      prevention: ['התקנת מפסק גבול עליון (LS-TOP) לזיהוי מיקום בית', 'התקנת מפסק גבול תחתון (LS-BTM) לזיהוי סוף מהלך', 'נוהל Homing - סכין חייבת להיות למעלה לפני כל מחזור', 'חסימת הפעלה אם מיקום לא ידוע', 'בדיקת מפסקי גבול תקופתית'],
       svg: `<svg viewBox="0 0 300 250" width="100%" height="100%">
         <rect x="60" y="10" width="20" height="200" rx="3" fill="#5a5c60"/>
         <rect x="220" y="10" width="20" height="200" rx="3" fill="#5a5c60"/>
         <rect x="60" y="10" width="180" height="20" fill="#5a5c60"/>
+        <!-- LS-TOP missing -->
+        <rect x="35" y="30" width="25" height="14" rx="3" fill="#333" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <text x="47" y="40" text-anchor="middle" fill="#e74c3c" font-size="6" font-weight="700">LS-T?</text>
+        <!-- LS-BTM missing -->
+        <rect x="35" y="185" width="25" height="14" rx="3" fill="#333" stroke="#e74c3c" stroke-width="1.5" stroke-dasharray="3 2"/>
+        <text x="47" y="195" text-anchor="middle" fill="#e74c3c" font-size="6" font-weight="700">LS-B?</text>
+        <!-- Ghost knife positions -->
         <g transform="translate(0, 45)">
           <rect x="80" y="70" width="140" height="12" fill="#505255" opacity="0.3"/>
           <polygon points="80,82 220,82 220,90 90,100" fill="#e8c820" opacity="0.3"/>
@@ -2061,15 +1968,15 @@ const SAFETY = (() => {
         </g>
         <line x1="70" y1="30" x2="230" y2="210" stroke="#e74c3c" stroke-width="3" stroke-dasharray="8 4" style="animation: pulseRed 1s ease infinite;"/>
         <line x1="230" y1="30" x2="70" y2="210" stroke="#e74c3c" stroke-width="3" stroke-dasharray="8 4" style="animation: pulseRed 1s ease infinite;"/>
-        <text x="150" y="240" text-anchor="middle" fill="#e74c3c" font-size="12" font-weight="700">חיישן מיקום נכשל!</text>
+        <text x="150" y="240" text-anchor="middle" fill="#e74c3c" font-size="12" font-weight="700">חסרים מפסקי גבול!</text>
       </svg>`
     },
     {
-      title: 'תקלה הידראולית - דליפת שמן',
+      title: 'דליפת שמן הידראולי',
       danger: 'critical',
       dangerText: 'סכנה קריטית',
-      description: 'צינור הידראולי נשבר או דולף - שמן הידראולי בלחץ גבוה. הסכין עלולה ליפול בצורה לא מבוקרת, מפלס רצפה חלק לגרום לסכנת החלקה וכוויות.',
-      prevention: ['בדיקת צינורות וחיבורים יומית', 'חיישן לחץ שמן במעגל הידראולי', 'מגש הגנה תחת המכונה', 'החלפת צינורות לפי לוח זמנים'],
+      description: 'צינור הידראולי נשבר או דולף - שמן בלחץ גבוה. הלחץ יורד, הסכין עלולה ליפול בצורה לא מבוקרת בגלל משקלה. רצפה חלקלקה מסוכנת, סכנת כוויות משמן חם, ונזק למכונה.',
+      prevention: ['בדיקת צינורות וחיבורים יומית', 'חיישן לחץ שמן במעגל ההידראולי', 'מגש הגנה תחת המכונה', 'החלפת צינורות לפי לוח זמנים', 'שסתום Normally Closed - סכין חוזרת למעלה בירידת לחץ'],
       svg: `<svg viewBox="0 0 300 250" width="100%" height="100%">
         <rect x="60" y="10" width="20" height="200" rx="3" fill="#5a5c60"/>
         <rect x="220" y="10" width="20" height="200" rx="3" fill="#5a5c60"/>
@@ -2085,64 +1992,22 @@ const SAFETY = (() => {
         <circle cx="46" cy="125" r="3" fill="#c0392b" style="animation: leakDrip 1.5s ease 0.6s infinite;"/>
         <!-- Oil puddle -->
         <ellipse cx="50" cy="195" rx="25" ry="8" fill="#7a2020" opacity="0.6"/>
+        <!-- Pressure gauge dropping -->
+        <circle cx="200" cy="60" r="25" fill="#1a1a2e" stroke="#555" stroke-width="2"/>
+        <text x="200" y="55" text-anchor="middle" fill="#e74c3c" font-size="8" font-weight="700">BAR</text>
+        <text x="200" y="68" text-anchor="middle" fill="#e74c3c" font-size="12" font-weight="700" style="animation: pulseRed 0.5s ease infinite;">0</text>
+        <text x="200" y="95" text-anchor="middle" fill="#e74c3c" font-size="8">לחץ אפס!</text>
         <!-- Warning -->
         <text x="150" y="230" text-anchor="middle" fill="#c0392b" font-size="13" font-weight="700" style="animation: pulseRed 1s ease infinite;">⚠ דליפת שמן הידראולי!</text>
         <rect x="30" y="85" width="45" height="35" fill="none" stroke="#e74c3c" stroke-width="2" rx="3" stroke-dasharray="4 2" style="animation: pulseRed 0.8s ease infinite;"/>
       </svg>`
     },
     {
-      title: 'כשל חיישן קירבה (Sensor Failure)',
+      title: 'כשל משאבת הידראולית',
       danger: 'high',
       dangerText: 'סכנה גבוהה',
-      description: 'החיישן האינדוקטיבי מפסיק לעבוד או נותן קריאה שגויה. המערכת לא מזהה את הגליל ועלולה לאפשר חתיכה בלי שהגליל מוכן, או לחסום את המערכת לגמרי.',
-      prevention: ['בדיקת חיישנים תקופתית', 'חיווי חיישן כפול - איתות תקלה', 'שימוש בחיישן כפול כעקרון בטיחות', 'התראה על מסך לטכנאי'],
-      svg: `<svg viewBox="0 0 300 250" width="100%" height="100%">
-        <rect x="170" y="80" width="40" height="40" rx="6" fill="#335" stroke="#557" stroke-width="2"/>
-        <circle cx="190" cy="100" r="10" fill="none" stroke="#44aaff" stroke-width="2" opacity="0.3"/>
-        <line x1="170" y1="80" x2="210" y2="120" stroke="#e74c3c" stroke-width="3"/>
-        <line x1="210" y1="80" x2="170" y2="120" stroke="#e74c3c" stroke-width="3"/>
-        <text x="190" y="145" text-anchor="middle" fill="#e74c3c" font-size="11" font-weight="700">חיישן לא תקין</text>
-        <!-- Relay stays energized incorrectly -->
-        <rect x="90" y="160" width="50" height="30" rx="4" fill="#3a3a4a" stroke="#5a5a6a"/>
-        <text x="115" y="180" text-anchor="middle" fill="#f39c12" font-size="12" font-weight="700">R1</text>
-        <circle cx="135" cy="167" r="6" fill="#e74c3c" style="animation: pulseRed 0.5s ease infinite;"/>
-        <text x="150" y="210" text-anchor="middle" fill="#f39c12" font-size="10" style="animation: flashWarn 1s ease infinite;">רלה תקוע במצב ON</text>
-        <path d="M190,120 L190,145 L115,145 L115,160" stroke="#e74c3c" stroke-width="2" fill="none" stroke-dasharray="5 3"/>
-      </svg>`
-    },
-    {
-      title: 'כשל בקרת שני ידיים (Two-Hand Bypass)',
-      danger: 'critical',
-      dangerText: 'סכנה קריטית',
-      description: 'מפעיל מנסה לעקוף את בקרת שני ידיים על ידי קשירת כפתור אחד במצב לחוץ, ולחיצה על START ביד אחת. היד השנייה נמצאת באזור הסכין.',
-      prevention: ['בקרת שני ידיים לפי תקן EN 574 עם טיימר', 'הרחקה מספקת בין הכפתורים', 'מצלמה לפני כל מחזור', 'ביקורת תקופתיות של מערכת הבטיחות'],
-      svg: `<svg viewBox="0 0 300 250" width="100%" height="100%">
-        <!-- Two buttons -->
-        <circle cx="100" cy="80" r="20" fill="#2d8a4e" stroke="#1a6a38" stroke-width="3"/>
-        <text x="100" y="85" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">PB1</text>
-        <circle cx="200" cy="80" r="20" fill="#2d8a4e" stroke="#1a6a38" stroke-width="3"/>
-        <text x="200" y="85" text-anchor="middle" fill="#fff" font-size="10" font-weight="700">PB2</text>
-        <!-- Tape on PB1 -->
-        <rect x="78" y="65" width="44" height="30" rx="2" fill="#888" opacity="0.5" transform="rotate(-10, 100, 80)"/>
-        <text x="100" y="83" text-anchor="middle" fill="#333" font-size="8" font-weight="700" transform="rotate(-10, 100, 80)">קשור</text>
-        <!-- Hand on PB2 only -->
-        <text x="200" y="50" text-anchor="middle" font-size="30">✋</text>
-        <!-- Danger zone -->
-        <rect x="80" y="130" width="140" height="15" fill="#505255"/>
-        <polygon points="80,145 220,145 220,153 90,163" fill="#e8c820"/>
-        <line x1="220" y1="153" x2="90" y2="163" stroke="#e74c3c" stroke-width="2"/>
-        <text x="150" y="195" text-anchor="middle" fill="#e74c3c" font-size="11" font-weight="700" style="animation: pulseRed 1s ease infinite;">סכנה! יד באזור החתיכה</text>
-        <!-- Arrow from hand to danger -->
-        <path d="M220,100 C240,110 240,125 220,135" stroke="#e74c3c" stroke-width="2" fill="none" marker-end="url(#arrowRed)"/>
-        <defs><marker id="arrowRed" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto"><path d="M0,0 L6,2 L0,4" fill="#e74c3c"/></marker></defs>
-      </svg>`
-    },
-    {
-      title: 'כשל משאבת הידראולית (Pump Failure)',
-      danger: 'high',
-      dangerText: 'סכנה גבוהה',
-      description: 'משאבת ההידראוליקה מפסיקה לעבוד באמצע המחזור. הסכין נתקעת באמצע ולא יכולה לחזור למעלה או לרדת. סכנה להתחלה לא מתוכננת בניסיון הבא.',
-      prevention: ['תחזוקה שוטפת של משאבה ומנוע', 'טיימר 15 שניות לניתוק אוטומטי', 'הגנה תרמית למנוע 16A', 'שסתום לחץ שמן לזיהוי חימום יתר'],
+      description: 'משאבת ההידראוליקה מפסיקה לעבוד באמצע המחזור - מנוע שרוף, עומס יתר, או כשל מכני. הסכין נתקעת באמצע ולא יכולה לחזור למעלה. סכנה להידבקות במצב מסוכן.',
+      prevention: ['טיימר 15 שניות מנתק אוטומטית את הקונטקטור והמשאבה', 'הגנה תרמית למנוע (16A)', 'תחזוקה שוטפת - שמן, פילטרים, רמת שמן', 'שסתום לחץ מקסימלי (Relief Valve)', 'הוראה: אם המשאבה לא עובדת - לא לנסות שוב ללא בדיקה'],
       svg: `<svg viewBox="0 0 300 250" width="100%" height="100%">
         <!-- Motor -->
         <circle cx="150" cy="100" r="40" fill="#4a4a5a" stroke="#6a6a7a" stroke-width="3"/>
@@ -2150,24 +2015,24 @@ const SAFETY = (() => {
         <!-- X mark on motor -->
         <line x1="120" y1="70" x2="180" y2="130" stroke="#e74c3c" stroke-width="4"/>
         <line x1="180" y1="70" x2="120" y2="130" stroke="#e74c3c" stroke-width="4"/>
-        <!-- Sparks -->
-        <text x="195" y="70" fill="#f1c40f" font-size="16" style="animation: sparkFlash 2s ease infinite;">\u26a1</text>
-        <text x="100" y="70" fill="#f1c40f" font-size="14" style="animation: sparkFlash 2s ease 0.5s infinite;">\u26a1</text>
-        <!-- Temperature warning -->
-        <text x="150" y="160" text-anchor="middle" fill="#e67e22" font-size="11" font-weight="700">עומס יתר על ממוסץ!</text>
-        <rect x="100" y="175" width="100" height="12" rx="3" fill="#333" stroke="#555"/>
-        <rect x="100" y="175" width="85" height="12" rx="3" fill="linear" style="background:linear-gradient(90deg,#2ecc71,#f1c40f,#e74c3c)">
-        </rect>
-        <rect x="100" y="175" width="85" height="12" rx="3" fill="#e74c3c" opacity="0.8"/>
-        <text x="150" y="205" text-anchor="middle" fill="#e74c3c" font-size="12" font-weight="700" style="animation: pulseRed 1s ease infinite;">כשל משאבה!</text>
+        <!-- Timer -->
+        <rect x="60" y="170" width="80" height="35" rx="5" fill="#1a1a2e" stroke="#f39c12" stroke-width="2"/>
+        <text x="100" y="183" text-anchor="middle" fill="#f39c12" font-size="8" font-weight="700">TIMER 15s</text>
+        <text x="100" y="198" text-anchor="middle" fill="#e74c3c" font-size="12" font-weight="700" style="animation: pulseRed 1s ease infinite;">00:00</text>
+        <!-- Contactor OFF -->
+        <rect x="160" y="170" width="80" height="35" rx="5" fill="#1a1a2e" stroke="#e74c3c" stroke-width="2"/>
+        <text x="200" y="183" text-anchor="middle" fill="#e74c3c" font-size="8" font-weight="700">CONTACTOR</text>
+        <text x="200" y="198" text-anchor="middle" fill="#e74c3c" font-size="12" font-weight="700">OFF</text>
+        <path d="M100,205 L150,215 L200,205" stroke="#e74c3c" stroke-width="2" fill="none"/>
+        <text x="150" y="235" text-anchor="middle" fill="#e74c3c" font-size="12" font-weight="700" style="animation: pulseRed 1s ease infinite;">טיימר נגמר → משאבה נעצרת!</text>
       </svg>`
     },
     {
-      title: 'סכין יורדת במהירות לא מתוכננת',
+      title: 'סכין יורדת במהירות לא מבוקרת',
       danger: 'high',
       dangerText: 'סכנה גבוהה',
-      description: 'שסתום הבקרה מאפשר לסכין לרדת מהר מדי בגלל כוח הכבידה של המכונה. זה גורם לעומס מוגבר על המכונה, פגיעה במסגרת וקיצור חיי הסכין.',
-      prevention: ['התקנת שסתום מפחית מהירות (Flow Control Valve)', 'נוהל בידוק מהירות הסכין תקופתית', 'חיישני מהירות מורשים', 'מגבלות מכניות לספיגת אנרגיה'],
+      description: 'שסתום הבקרה SV1 תקוע במצב פתוח, או שהשסתום לא מגביל זרימה. הסכין יורדת מהר מדי בגלל כוח הכבידה. פגיעה חזקה בגליל, נזק למסגרת, וסכנה למפעיל.',
+      prevention: ['התקנת שסתום הגבלת זרימה (Flow Control Valve)', 'שסתום SV1 = Normally Closed (סוגר בהפסקת חשמל)', 'שסתום קפיץ מכני להחזרת הסכין למעלה', 'בדיקת מהירות ירידה תקופתית', 'חיישן מהירות עם ניתוק אוטומטי בחריגה'],
       svg: `<svg viewBox="0 0 300 250" width="100%" height="100%">
         <rect x="60" y="10" width="20" height="200" rx="3" fill="#5a5c60"/>
         <rect x="220" y="10" width="20" height="200" rx="3" fill="#5a5c60"/>
@@ -2183,60 +2048,40 @@ const SAFETY = (() => {
         <text x="255" y="60" fill="#e74c3c" font-size="20" style="animation: pulseRed 0.3s ease infinite;">▼</text>
         <text x="40" y="80" fill="#e74c3c" font-size="20" style="animation: pulseRed 0.3s 0.15s ease infinite;">▼</text>
         <text x="255" y="80" fill="#e74c3c" font-size="20" style="animation: pulseRed 0.3s 0.15s ease infinite;">▼</text>
+        <!-- SV1 stuck open -->
+        <rect x="100" y="170" width="100" height="30" rx="5" fill="#1a1a2e" stroke="#e74c3c" stroke-width="2"/>
+        <text x="150" y="183" text-anchor="middle" fill="#e74c3c" font-size="8" font-weight="700">SV1 תקוע OPEN</text>
+        <text x="150" y="195" text-anchor="middle" fill="#f39c12" font-size="7" style="animation: flashWarn 1s ease infinite;">שסתום לא נסגר!</text>
         <!-- Roll -->
-        <ellipse cx="150" cy="160" rx="30" ry="30" fill="#e8e2d4" stroke="#ccc6b6" stroke-width="2"/>
-        <ellipse cx="150" cy="160" rx="8" ry="8" fill="#a08060"/>
-        <text x="150" y="225" text-anchor="middle" fill="#e67e22" font-size="12" font-weight="700" style="animation: flashWarn 0.5s ease infinite;">⚠ מהירות ירידה מוגברת!</text>
+        <ellipse cx="150" cy="140" rx="30" ry="30" fill="#e8e2d4" stroke="#ccc6b6" stroke-width="2"/>
+        <ellipse cx="150" cy="140" rx="8" ry="8" fill="#a08060"/>
+        <text x="150" y="225" text-anchor="middle" fill="#e67e22" font-size="12" font-weight="700" style="animation: flashWarn 0.5s ease infinite;">⚠ ירידה לא מבוקרת!</text>
       </svg>`
     },
     {
-      title: 'מגן בטיחות פתוח בזמן פעולה',
-      danger: 'critical',
-      dangerText: 'סכנה קריטית',
-      description: 'מגן הבטיחות השקוף (מפוליקרבונט) נפתח או מורם בזמן שהסכין בתנועה. המפעיל מכניס יד ונפגע על ידי הסכין.',
-      prevention: ['נעילת בטיחות אלקטרונית (Interlock) על הדלת', 'מגן עם נעילת בטיחות לפי תקן ISO 14119', 'קרנות אור מתוזמנות לאזור החתיכה', 'עצירת מכונה אוטומטית בפתיחת דלת'],
+      title: 'כשל טיימר - סכין לא חוזרת בזמן',
+      danger: 'high',
+      dangerText: 'סכנה גבוהה',
+      description: 'הטיימר (15 שניות) מגביל את זמן המחזור. אם הסכין לא חוזרת למעלה לפני שהטיימר נגמר, המשאבה נעצרת והסכין נתקעת באמצע. מצב מסוכן שדורש התערבות טכנאי.',
+      prevention: ['טיימר 15 שניות מנתק את הקונטקטור אוטומטית', 'אסור להפעיל שוב את המכונה ללא בדיקת הסיבה', 'בדיקת מהירות הסכין - האם המחזור מסתיים בזמן', 'תחזוקת משאבה ושסתומים לזרימה תקינה', 'זיהוי תקלה: אם הסכין לא למעלה אחרי הטיימר = תקלה'],
       svg: `<svg viewBox="0 0 300 250" width="100%" height="100%">
-        <rect x="60" y="10" width="20" height="200" rx="3" fill="#5a5c60"/>
-        <rect x="220" y="10" width="20" height="200" rx="3" fill="#5a5c60"/>
-        <rect x="60" y="10" width="180" height="20" fill="#5a5c60"/>
-        <!-- Safety guard OPEN -->
-        <rect x="40" y="50" width="15" height="120" rx="2" fill="rgba(100,180,255,0.3)" stroke="rgba(150,200,255,0.6)" stroke-width="2" transform="rotate(-30, 47, 50)"/>
-        <text x="20" y="90" fill="#3498db" font-size="8" transform="rotate(-30, 20, 90)">מגן פתוח!</text>
-        <!-- Moving knife -->
-        <g>
-          <rect x="80" y="90" width="140" height="12" fill="#505255"/>
-          <polygon points="80,102 220,102 220,110 90,120" fill="#e8c820"/>
-          <line x1="220" y1="110" x2="90" y2="120" stroke="#e74c3c" stroke-width="2"/>
-        </g>
-        <!-- Hand reaching in -->
-        <text x="245" y="120" font-size="30">✋</text>
-        <path d="M245,120 L220,115" stroke="#e74c3c" stroke-width="2" stroke-dasharray="4 2" style="animation: pulseRed 0.5s ease infinite;"/>
-        <text x="150" y="230" text-anchor="middle" fill="#e74c3c" font-size="12" font-weight="700" style="animation: pulseRed 1s ease infinite;">⚠ מגן פתוח - גישה לסכין!</text>
-      </svg>`
-    },
-    {
-      title: 'כשל חשמלי - ניתוק פתאומי',
-      danger: 'medium',
-      dangerText: 'סכנה בינונית',
-      description: 'הפסקת חשמל פתאומית גורמת לכל מערכות הבקרה לאבד את המצב הבטוח. הסכין עלולה ליפול בגלל משקלה ולפגוע במפעיל, SV1 לא נסגר או נפתח לא במקום.',
-      prevention: ['אל פסק (UPS) למערכת הבקרה', 'שסתום SV1 = Normally Closed (סכין חוזרת למעלה בהפסקה)', 'שסתום קפיץ מכני להחזרת הסכין', 'מוניטורינג מתח והתראות'],
-      svg: `<svg viewBox="0 0 300 250" width="100%" height="100%">
-        <!-- Power symbol -->
-        <circle cx="150" cy="70" r="35" fill="none" stroke="#555" stroke-width="4"/>
-        <line x1="150" y1="35" x2="150" y2="70" stroke="#555" stroke-width="5"/>
-        <!-- X over power -->
-        <line x1="120" y1="40" x2="180" y2="100" stroke="#e74c3c" stroke-width="3"/>
-        <line x1="180" y1="40" x2="120" y2="100" stroke="#e74c3c" stroke-width="3"/>
-        <text x="150" y="125" text-anchor="middle" fill="#e74c3c" font-size="12" font-weight="700">הפסקת חשמל!</text>
-        <!-- SV1 stuck -->
-        <rect x="80" y="150" width="60" height="30" rx="4" fill="#3a3a4a" stroke="#5a5a6a" stroke-width="2"/>
-        <text x="110" y="170" text-anchor="middle" fill="#f39c12" font-size="12" font-weight="700">SV1</text>
-        <text x="110" y="195" text-anchor="middle" fill="#f39c12" font-size="9" style="animation: flashWarn 1.5s ease infinite;">תקוע במצב אחרון</text>
-        <!-- Knife stuck mid-way -->
-        <rect x="170" y="140" width="50" height="10" fill="#505255"/>
-        <polygon points="170,150 220,150 220,156 175,162" fill="#e8c820" opacity="0.6"/>
-        <text x="195" y="180" text-anchor="middle" fill="#e67e22" font-size="9">סכין תקועה באמצע</text>
-        <text x="150" y="230" text-anchor="middle" fill="#f39c12" font-size="11" font-weight="700" style="animation: flashWarn 1.5s ease infinite;">⚡ ניתוק חשמל פתאומי</text>
+        <!-- Big timer display -->
+        <rect x="75" y="15" width="150" height="80" rx="10" fill="#1a1a2e" stroke="#e74c3c" stroke-width="3"/>
+        <text x="150" y="45" text-anchor="middle" fill="#f39c12" font-size="14" font-weight="700">TIMER</text>
+        <text x="150" y="75" text-anchor="middle" fill="#e74c3c" font-size="28" font-weight="700" style="animation: pulseRed 0.5s ease infinite;">00:00</text>
+        <!-- Arrow to knife stuck -->
+        <line x1="150" y1="100" x2="150" y2="120" stroke="#e74c3c" stroke-width="2" marker-end="url(#arrowT)"/>
+        <!-- Knife stuck in middle -->
+        <rect x="80" y="130" width="18" height="100" rx="3" fill="#5a5c60"/>
+        <rect x="202" y="130" width="18" height="100" rx="3" fill="#5a5c60"/>
+        <rect x="98" y="170" width="104" height="10" rx="2" fill="#505255"/>
+        <polygon points="98,180 202,180 202,186 103,191" fill="#e8c820" opacity="0.7"/>
+        <text x="150" y="165" text-anchor="middle" fill="#f39c12" font-size="9" style="animation: flashWarn 1s ease infinite;">סכין תקועה באמצע!</text>
+        <!-- Pump OFF -->
+        <circle cx="80" y="135" r="15" fill="#4a4a5a" stroke="#e74c3c" stroke-width="2" cx="250" cy="180"/>
+        <text x="250" y="184" text-anchor="middle" fill="#e74c3c" font-size="8" font-weight="700">M OFF</text>
+        <text x="150" y="240" text-anchor="middle" fill="#e74c3c" font-size="12" font-weight="700">טיימר נגמר → משאבה נעצרת → סכין תקועה</text>
+        <defs><marker id="arrowT" markerWidth="6" markerHeight="4" refX="5" refY="2" orient="auto"><path d="M0,0 L6,2 L0,4" fill="#e74c3c"/></marker></defs>
       </svg>`
     }
   ];
