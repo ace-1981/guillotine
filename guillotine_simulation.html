@@ -705,14 +705,14 @@
     <div class="panel-header">Interactive Controls</div>
     <div class="panel-body">
 
-<!-- Safety Guard -->
+<!-- Safety Curtain -->
     <div class="control-group">
-      <div class="control-group-title">Safety Guard / מגן בטיחות</div>
+      <div class="control-group-title">וילון בטיחות / Safety Curtain</div>
       <button class="btn" id="btnDoor" onclick="SIM.toggleDoor()" style="border-color:#c0392b;">
         <span class="btn-indicator"></span>
-        <span class="btn-text">מגן בטיחות: פתוח</span>
+        <span class="btn-text">וילון בטיחות: פתוח</span>
       </button>
-      <div style="text-align:center; font-size:10px; color:#e74c3c; margin-top:2px;">⚠ יש לסגור את המגן לפני הפעלה</div>
+      <div style="text-align:center; font-size:10px; color:#e74c3c; margin-top:2px;">⚠ יש לסגור את הוילון לפני הפעלה</div>
     </div>
 
     <!-- Cylinder -->
@@ -749,12 +749,12 @@
       <!-- Instructions -->
       <div class="instructions" style="direction:rtl; text-align:right;">
         <strong>הוראות הפעלה:</strong><br>
-        1. סגור את מגן הבטיחות (Safety Guard)<br>
+        1. סגור את וילון הבטיחות (Safety Curtain)<br>
         2. לחץ על כפתור הגליל להכנסתו למצב CLOSED<br>
         3. לחץ והחזק את שני הכפתורים PB1+PB2 בו זמנית<br>
         4. צפה במחזור החיתוך מתבצע<br>
         <br>
-        <strong>שים לב:</strong> פתיחת המגן או שחרור כפתור במהלך המחזור יעצור מיידית את המערכת.
+        <strong>שים לב:</strong> פתיחת הוילון או שחרור כפתור במהלך המחזור יעצור מיידית את המערכת.
       </div>
 
       <!-- Event Log -->
@@ -856,15 +856,25 @@
             <path d="M135,40 Q120,50 105,48 Q90,46 85,35" fill="none" stroke="#333" stroke-width="1.5" stroke-linecap="round"/>
           </g>
 
-          <!-- Transparent safety guard (polycarbonate) -->
+          <!-- Safety curtain on roller -->
           <g id="safetyGuardGroup">
-            <rect x="175" y="80" width="210" height="185" rx="3" id="guardPanel"
-                  fill="rgba(100,180,255,0.06)" stroke="rgba(150,200,255,0.25)" stroke-width="1.5"/>
-            <line x1="175" y1="80" x2="175" y2="265" stroke="rgba(200,230,255,0.15)" stroke-width="1" id="guardEdge"/>
-            <text x="280" y="95" text-anchor="middle" font-size="7" id="guardLabel" fill="rgba(150,200,255,0.3)">SAFETY GUARD</text>
-            <!-- Guard status indicator -->
-            <circle cx="190" cy="90" r="4" id="guardLed" fill="#e74c3c"/>
-            <text x="200" y="93" font-size="6" fill="#e74c3c" id="guardStatusText">OPEN</text>
+            <!-- Curtain roller at top -->
+            <rect x="175" y="76" width="210" height="8" rx="4" fill="#6a6c70" stroke="#8a8c90" stroke-width="1" id="curtainRoller"/>
+            <circle cx="180" cy="80" r="5" fill="#555" stroke="#777" stroke-width="1"/>
+            <circle cx="380" cy="80" r="5" fill="#555" stroke="#777" stroke-width="1"/>
+            <!-- Plastic curtain (translucent strips) -->
+            <rect x="175" y="84" width="210" height="181" rx="1" id="guardPanel"
+                  fill="rgba(255,220,100,0.08)" stroke="rgba(255,200,50,0.2)" stroke-width="1"/>
+            <!-- Curtain vertical strip lines -->
+            <line x1="210" y1="84" x2="210" y2="265" stroke="rgba(255,200,50,0.1)" stroke-width="0.5"/>
+            <line x1="245" y1="84" x2="245" y2="265" stroke="rgba(255,200,50,0.1)" stroke-width="0.5"/>
+            <line x1="280" y1="84" x2="280" y2="265" stroke="rgba(255,200,50,0.1)" stroke-width="0.5"/>
+            <line x1="315" y1="84" x2="315" y2="265" stroke="rgba(255,200,50,0.1)" stroke-width="0.5"/>
+            <line x1="350" y1="84" x2="350" y2="265" stroke="rgba(255,200,50,0.1)" stroke-width="0.5"/>
+            <text x="280" y="95" text-anchor="middle" font-size="7" id="guardLabel" fill="rgba(255,200,50,0.3)">וילון בטיחות</text>
+            <!-- Status indicator -->
+            <circle cx="190" cy="73" r="4" id="guardLed" fill="#e74c3c"/>
+            <text x="200" y="76" font-size="6" fill="#e74c3c" id="guardStatusText">OPEN</text>
           </g>
 
           <!-- Table / cutting surface -->
@@ -1198,7 +1208,7 @@
         <div class="control-group-title">Safety Inputs</div>
         <div class="status-item off" id="stDoor">
           <div class="status-led"></div>
-          <div class="status-label">Safety Guard / מגן</div>
+          <div class="status-label">וילון בטיחות / Curtain</div>
           <div class="status-value">OPEN</div>
         </div>
         <div class="status-item off" id="stSensor">
@@ -1351,11 +1361,11 @@ const SIM = (() => {
   // ===== INPUT HANDLERS =====
   function toggleDoor() {
     if (state.cycleActive) {
-      log('Cannot open guard during active cycle!', 'off');
+      log(`Cannot open curtain during active cycle!`, 'off');
       return;
     }
     state.doorClosed = !state.doorClosed;
-    log(`Safety Guard ${state.doorClosed ? 'CLOSED ✓' : 'OPENED ✗'}`, state.doorClosed ? 'on' : 'off');
+    log(`וילון בטיחות ${state.doorClosed ? 'CLOSED ✓' : 'OPENED ✗'}`, state.doorClosed ? 'on' : 'off');
     updateUI();
   }
 
@@ -1452,7 +1462,7 @@ const SIM = (() => {
       if (!state.doorClosed) {
         if (state.sv1Energized) {
           state.sv1Energized = false;
-          log('!!! GUARD OPENED - EMERGENCY STOP !!!', 'off');
+          log('!!! CURTAIN OPENED - EMERGENCY STOP !!!', 'off');
           log('Spring-loaded coil returning knife UP', 'warn');
         }
         state.knifeDirection = 'up';
@@ -1574,7 +1584,7 @@ const SIM = (() => {
     const btnDoor = document.getElementById('btnDoor');
     btnDoor.classList.toggle('active', state.doorClosed);
     btnDoor.style.borderColor = state.doorClosed ? '#2ecc71' : '#c0392b';
-    btnDoor.querySelector('.btn-text').textContent = state.doorClosed ? 'מגן בטיחות: סגור ✓' : 'מגן בטיחות: פתוח ✗';
+    btnDoor.querySelector('.btn-text').textContent = state.doorClosed ? 'וילון בטיחות: סגור ✓' : 'וילון בטיחות: פתוח ✗';
 
     const btnCyl = document.getElementById('btnCylinder');
     btnCyl.classList.toggle('active', state.cylinderClosed);
@@ -1630,30 +1640,30 @@ const SIM = (() => {
       cylBody.setAttribute('class', 'cylinder-body cylinder-open');
     }
 
-    // Safety Guard
+    // Safety Curtain
     const guardPanel = document.getElementById('guardPanel');
     const guardLed = document.getElementById('guardLed');
     const guardStatusText = document.getElementById('guardStatusText');
     const guardLabel = document.getElementById('guardLabel');
     if (state.doorClosed) {
-      guardPanel.setAttribute('fill', 'rgba(100,180,255,0.12)');
+      guardPanel.setAttribute('fill', 'rgba(255,220,100,0.15)');
       guardPanel.setAttribute('stroke', 'rgba(46,204,113,0.4)');
-      guardPanel.setAttribute('stroke-width', '2');
+      guardPanel.setAttribute('stroke-width', '1.5');
       guardLed.setAttribute('fill', '#2ecc71');
       guardStatusText.textContent = 'CLOSED';
       guardStatusText.setAttribute('fill', '#2ecc71');
-      guardLabel.setAttribute('fill', 'rgba(46,204,113,0.4)');
-      guardLabel.textContent = 'SAFETY GUARD - CLOSED';
+      guardLabel.setAttribute('fill', 'rgba(46,204,113,0.5)');
+      guardLabel.textContent = 'וילון בטיחות - סגור';
     } else {
-      guardPanel.setAttribute('fill', 'rgba(255,100,100,0.04)');
-      guardPanel.setAttribute('stroke', 'rgba(231,76,60,0.3)');
-      guardPanel.setAttribute('stroke-width', '2');
-      guardPanel.setAttribute('stroke-dasharray', '8 4');
+      guardPanel.setAttribute('fill', 'rgba(255,100,100,0.03)');
+      guardPanel.setAttribute('stroke', 'rgba(231,76,60,0.2)');
+      guardPanel.setAttribute('stroke-width', '1');
+      guardPanel.setAttribute('stroke-dasharray', '6 4');
       guardLed.setAttribute('fill', '#e74c3c');
       guardStatusText.textContent = 'OPEN';
       guardStatusText.setAttribute('fill', '#e74c3c');
       guardLabel.setAttribute('fill', 'rgba(231,76,60,0.4)');
-      guardLabel.textContent = 'SAFETY GUARD - OPEN ⚠';
+      guardLabel.textContent = 'וילון בטיחות - פתוח ⚠';
     }
     if (state.doorClosed) {
       guardPanel.removeAttribute('stroke-dasharray');
