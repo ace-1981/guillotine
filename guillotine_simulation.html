@@ -357,6 +357,7 @@
   .cylinder-body { fill: #e8e2d4; stroke: #ccc6b6; stroke-width: 1.5; }
   .cylinder-closed { fill: #e8e2d4; stroke: #2ecc71; stroke-width: 2; }
   .cylinder-open { fill: #e8e2d4; stroke: #ccc6b6; }
+  #paperRollGroup { transition: transform 0.6s ease, opacity 0.6s ease; }
 
   .sensor-body { fill: #335; stroke: #557; stroke-width: 1; }
   .sensor-active { fill: #2277cc; stroke: #44aaff; box-shadow: 0 0 10px blue; }
@@ -939,6 +940,18 @@
 
           <!-- ===== WASTE BIN (Yellow, like in photo) ===== -->
           <g id="wasteBin">
+
+          <!-- ===== CYLINDER TOGGLE BUTTON (operator side) ===== -->
+          <g id="svgCylinderBtn" transform="translate(470, 180)" style="cursor:pointer;"
+             onclick="SIM.toggleCylinder()">
+            <rect x="-30" y="-18" width="60" height="50" rx="8" fill="#2a2d35" stroke="#4a4d55" stroke-width="1.5"/>
+            <rect x="-24" y="-10" width="48" height="28" rx="5" fill="#3a3a4a" stroke="#5a5a6a" stroke-width="1" id="svgCylBtnBg"/>
+            <text x="0" y="4" text-anchor="middle" font-size="9" fill="#e74c3c" font-weight="700" id="svgCylBtnText">OPEN</text>
+            <circle cx="22" cy="-3" r="4" fill="#e74c3c" id="svgCylBtnLed"/>
+            <text x="0" y="22" text-anchor="middle" font-size="6" fill="#8a8d95">גליל / Cylinder</text>
+            <!-- Arrow hint -->
+            <text x="0" y="38" text-anchor="middle" font-size="7" fill="#666" id="svgCylArrowHint">◀ לחץ להכנסה</text>
+          </g>
             <!-- Bin body (trapezoid, wider at top) -->
             <polygon points="210,310 350,310 340,400 220,400" fill="#c8a020" stroke="#a88010" stroke-width="2"/>
             <!-- Bin inner shadow -->
@@ -1568,10 +1581,31 @@ const SIM = (() => {
     const cylBody = document.getElementById('cylinderBody');
     const rollerShine = document.getElementById('rollerShine');
     const rollShadow = document.getElementById('rollShadow');
+    const paperRollGroup = document.getElementById('paperRollGroup');
+    const svgCylBtnBg = document.getElementById('svgCylBtnBg');
+    const svgCylBtnText = document.getElementById('svgCylBtnText');
+    const svgCylBtnLed = document.getElementById('svgCylBtnLed');
+    const svgCylArrowHint = document.getElementById('svgCylArrowHint');
     if (state.cylinderClosed) {
       cylBody.setAttribute('class', 'cylinder-body cylinder-closed');
+      paperRollGroup.setAttribute('transform', 'translate(0, 0)');
+      paperRollGroup.setAttribute('opacity', '1');
+      svgCylBtnBg.setAttribute('fill', '#1a3a1a');
+      svgCylBtnBg.setAttribute('stroke', '#2ecc71');
+      svgCylBtnText.textContent = 'CLOSED';
+      svgCylBtnText.setAttribute('fill', '#2ecc71');
+      svgCylBtnLed.setAttribute('fill', '#2ecc71');
+      svgCylArrowHint.textContent = '▶ לחץ להוצאה';
     } else {
       cylBody.setAttribute('class', 'cylinder-body cylinder-open');
+      paperRollGroup.setAttribute('transform', 'translate(80, 0)');
+      paperRollGroup.setAttribute('opacity', '0.5');
+      svgCylBtnBg.setAttribute('fill', '#3a1a1a');
+      svgCylBtnBg.setAttribute('stroke', '#e74c3c');
+      svgCylBtnText.textContent = 'OPEN';
+      svgCylBtnText.setAttribute('fill', '#e74c3c');
+      svgCylBtnLed.setAttribute('fill', '#e74c3c');
+      svgCylArrowHint.textContent = '◀ לחץ להכנסה';
     }
 
     // Sensor
